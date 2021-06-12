@@ -13,6 +13,13 @@ import {
   RestExplorerComponent
 } from '@loopback/rest-explorer';
 import {ServiceMixin} from '@loopback/service-proxy';
+import {
+  NotificationBindings, NotificationsComponent,
+
+  SESBindings,
+
+  SesProvider
+} from 'loopback4-notifications';
 import path from 'path';
 import {DbDataSource} from './datasources';
 import {MySequence} from './sequence';
@@ -53,11 +60,25 @@ export class MoongateApplication extends BootMixin(
     this.component(AuthenticationComponent);
     // Mount jwt component
     this.component(JWTAuthenticationComponent);
+    // loopback/notifications.
+    this.component(NotificationsComponent);
     // Bind datasource
     this.dataSource(DbDataSource, UserServiceBindings.DATASOURCE_NAME);
     // ------------- END OF SNIPPET -------------
 
-    //new
+    // MyUserService
     this.bind(UserServiceBindings.USER_SERVICE).toClass(MyUserService);
+
+    // Aws-Ses
+    this.bind(NotificationBindings.Config).to({
+      sendToMultipleReceivers: false,
+      senderEmail: 'support@cepheus.info'
+    });
+    this.bind(SESBindings.Config).to({
+      accessKeyId: process.env.SES_ACCESS_KEY_ID,
+      secretAccessKey: process.env.SES_SECRET_ACCESS_KEY,
+      region: process.env.SES_REGION,
+    });
+    this.bind(NotificationBindings.EmailProvider).toProvider(SesProvider);
   }
 }
