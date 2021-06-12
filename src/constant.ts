@@ -1,6 +1,6 @@
 
-export enum Status {
-  SUCCESS,
-  WARRING,
-  FAILED
+export const Status = {
+  SUCCESS: "SUCCESS",
+  WARRING: "WARRING",
+  FAILED: "FAILED"
 }

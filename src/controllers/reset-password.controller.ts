@@ -1,12 +1,15 @@
 import {TokenService} from '@loopback/authentication';
-import {MyUserService, TokenServiceBindings, UserRepository, UserServiceBindings} from '@loopback/authentication-jwt';
+import {MyUserService, TokenServiceBindings, User, UserRepository, UserServiceBindings} from '@loopback/authentication-jwt';
 import {inject} from '@loopback/core';
 import {repository} from '@loopback/repository';
-import {post, requestBody, SchemaObject} from '@loopback/rest';
+import {post, requestBody, response, ResponseObject, SchemaObject} from '@loopback/rest';
 import {SecurityBindings, UserProfile} from '@loopback/security';
 import {genSalt, hash} from 'bcryptjs';
+import _ from 'lodash';
+import {INotification, MessageType, NotificationBindings} from 'loopback4-notifications';
 import {Status} from '../constant';
-import {ResetPassword} from '../models';
+import {Notification, ResetPassword} from '../models';
+import {UserManagementService} from '../services/user-management.service';
 
 
 const ResetPasswordSchema: SchemaObject = {
@@ -31,6 +34,48 @@ export const ResetPasswordRequestBody = {
   },
 };
 
+
+const ForgotPasswordSchema: SchemaObject = {
+  type: 'object',
+  required: ['email'],
+  properties: {
+    email: {
+      type: 'string',
+      format: 'email'
+    }
+  }
+};
+
+export const ForgotPasswordRequestBody = {
+  description: 'The input of forgotPassword function',
+  require: true,
+  content: {
+    'application/json': {schema: ForgotPasswordSchema},
+  }
+};
+
+
+/**
+ * OpenAPI response for forgotPassword()
+ */
+export const ForgotPasswordResponse: ResponseObject = {
+  description: 'ForgotPassword Response',
+  content: {
+    'application/json': {
+      schema: {
+        type: 'object',
+        title: 'ForgotPasswordResponse',
+        properties: {
+          "data": {type: 'object'},
+          "status": {type: 'string'},
+          "errorCode": {type: 'number'},
+          "errorMessage": {type: 'string'}
+        },
+      },
+    },
+  },
+};
+
 export class ResetPasswordController {
   constructor(
     @inject(TokenServiceBindings.TOKEN_SERVICE)
@@ -40,7 +85,56 @@ export class ResetPasswordController {
     @inject(SecurityBindings.USER, {optional: true})
     public user: UserProfile,
     @repository(UserRepository) protected userRepository: UserRepository,
+    @inject(UserServiceBindings.USER_SERVICE)
+    public userManagementService: UserManagementService,
+    @inject(NotificationBindings.NotificationProvider)
+    private readonly notifProvider: INotification,
   ) { }
+
+
+  @post('/forgotPassword')
+  @response(200, ForgotPasswordResponse)
+  async forgot(
+    @requestBody(ForgotPasswordRequestBody) forgotPasswordRequest: User,
+  ): Promise<object> {
+
+    const {email} = forgotPasswordRequest;
+    const user = await this.userManagementService.requestPasswordReset(email);
+
+    if (!user) {
+      return {
+        "data": '',
+        "status": Status.FAILED.toString(),
+        "errorCode": "400",
+        "errorMessage": "发送重置邮件失败"
+      };
+    }
+
+    const message: Notification = new Notification({
+      subject: "重置密码",
+      body: `<div>
+          <p>Hello, ${user.email}</p>
+          <p style="color: red;">We received a request to reset the password for your account with email address: ${user.email}</p>
+          <p>To reset your password click on the link provided below</p>
+          <a href="${process.env.APPLICATION_URL}/reset-password-finish.html?token=${user.resetKey}">Reset your password link</a>
+          <p>If you didn’t request to reset your password, please ignore this email or reset your password to protect your account.</p>
+          <p>Thanks</p>
+          <p>LoopBack'ers at Shoppy</p>
+      </div>`,
+      receiver: {"to": [{"id": user.email}]},
+      sentDate: new Date(),
+      type: MessageType.Email,
+    });
+
+    await this.notifProvider.publish(message);
+
+    return {
+      "data": `一封邮件已发送到您的邮箱${user.email}`,
+      "status": Status.SUCCESS.toString(),
+      "errorCode": "",
+      "errorMessage": ""
+    };
+  }
 
   @post('/resetPassword', {
     responses: {
@@ -74,24 +168,37 @@ export class ResetPasswordController {
     @requestBody(ResetPasswordRequestBody) resetPassword: ResetPassword,
   ): Promise<any> {
     let result = undefined;
-    const tokenResult = await this.jwtService.verifyToken(resetPassword.token);
+
+    const user = await this.userRepository.findOne({where: {resetKey: resetPassword.token}});
+    if (!user) {
+      return {
+        "data": "",
+        "status": Status.FAILED.toString(),
+        "errorCode": "400",
+        "errorMessage": "invalid token provided."
+      };
+    }
+
+    const validatedUser = await this.userManagementService.validateResetKeyLifeSpan(user);
+
     const password = await hash(resetPassword.password, await genSalt());
-    const updateResult = await this.userRepository.userCredentials(tokenResult.id).patch({password});
+    const updateResult = await this.userRepository.userCredentials(validatedUser.id).patch({password});
+    await this.userRepository.updateById(validatedUser.id, validatedUser);
 
     if (updateResult && updateResult.count > 0) {
       return {
-        "data": tokenResult,
-        "status": Status.SUCCESS,
+        "data": _.pick(validatedUser, 'username', 'email'),
+        "status": Status.SUCCESS.toString(),
         "errorCode": "",
         "errorMessage": ""
       }
     }
     else {
       return {
-        "data": tokenResult,
-        "status": Status.FAILED,
+        "data": _.pick(validatedUser, 'username', 'email'),
+        "status": Status.FAILED.toString(),
         "errorCode": "500",
-        "errorMessage": "reset password failure"
+        "errorMessage": "reset password failed"
       }
     }
   }

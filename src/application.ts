@@ -1,7 +1,7 @@
 import {AuthenticationComponent} from '@loopback/authentication';
 import {
   JWTAuthenticationComponent,
-  MyUserService,
+
   UserServiceBindings
 } from '@loopback/authentication-jwt';
 import {BootMixin} from '@loopback/boot';
@@ -23,6 +23,7 @@ import {
 import path from 'path';
 import {DbDataSource} from './datasources';
 import {MySequence} from './sequence';
+import {UserManagementService} from './services';
 
 export {ApplicationConfig};
 
@@ -66,8 +67,8 @@ export class MoongateApplication extends BootMixin(
     this.dataSource(DbDataSource, UserServiceBindings.DATASOURCE_NAME);
     // ------------- END OF SNIPPET -------------
 
-    // MyUserService
-    this.bind(UserServiceBindings.USER_SERVICE).toClass(MyUserService);
+    // UserManagementService
+    this.bind(UserServiceBindings.USER_SERVICE).toClass(UserManagementService);
 
     // Aws-Ses
     this.bind(NotificationBindings.Config).to({

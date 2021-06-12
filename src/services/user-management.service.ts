@@ -1,11 +1,14 @@
 import {MyUserService, User, UserRepository} from '@loopback/authentication-jwt';
+import {BindingScope, injectable} from '@loopback/core';
+import {repository} from '@loopback/repository';
 import {HttpErrors} from '@loopback/rest';
 import {v4 as uuidv4} from 'uuid';
 import {subtractDates} from '../utils/substract-dates';
 
+@injectable({scope: BindingScope.TRANSIENT})
 export class UserManagementService extends MyUserService {
 
-  constructor(userRepository: UserRepository) {
+  constructor(@repository(UserRepository) userRepository: UserRepository) {
     super(userRepository);
   }
 
