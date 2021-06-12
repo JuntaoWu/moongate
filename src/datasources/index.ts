@@ -4,3 +4,4 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 export * from './db.datasource';
+export * from './refreshdb.datasource';

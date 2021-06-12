@@ -7,6 +7,8 @@ import {authenticate, TokenService} from '@loopback/authentication';
 import {
   Credentials,
   MyUserService,
+
+
   TokenServiceBindings,
   User,
   UserRepository,
@@ -18,11 +20,16 @@ import {
   get,
   post,
   requestBody,
+  response,
+  ResponseObject,
   SchemaObject
 } from '@loopback/rest';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 import {genSalt, hash} from 'bcryptjs';
 import _ from 'lodash';
+import {INotification, MessageType, NotificationBindings} from 'loopback4-notifications';
+import {Notification} from '../models';
+import {UserManagementService} from '../services/user-management';
 
 @model()
 export class NewUserRequest extends User {
@@ -56,15 +63,56 @@ export const CredentialsRequestBody = {
   },
 };
 
+const ForgotPasswordSchema: SchemaObject = {
+  type: 'object',
+  required: ['email'],
+  properties: {
+    email: {
+      type: 'string',
+      format: 'email'
+    }
+  }
+};
+
+export const ForgotPasswordRequestBody = {
+  description: 'The input of forgotPassword function',
+  require: true,
+  content: {
+    'application/json': {schema: ForgotPasswordSchema},
+  }
+};
+
+/**
+ * OpenAPI response for forgotPassword()
+ */
+export const ForgotPasswordResponse: ResponseObject = {
+  description: 'ForgotPassword Response',
+  content: {
+    'application/json': {
+      schema: {
+        type: 'object',
+        title: 'ForgotPasswordResponse',
+        properties: {
+          error: {type: 'boolean'},
+          message: {type: 'string'}
+        },
+      },
+    },
+  },
+};
+
 export class UserController {
   constructor(
     @inject(TokenServiceBindings.TOKEN_SERVICE)
     public jwtService: TokenService,
+    public userManagementService: UserManagementService,
     @inject(UserServiceBindings.USER_SERVICE)
     public userService: MyUserService,
     @inject(SecurityBindings.USER, {optional: true})
     public user: UserProfile,
     @repository(UserRepository) protected userRepository: UserRepository,
+    @inject(NotificationBindings.NotificationProvider)
+    private readonly notifProvider: INotification,
   ) { }
 
   @post('/users/login', {
@@ -147,5 +195,30 @@ export class UserController {
     await this.userRepository.userCredentials(savedUser.id).create({password});
 
     return savedUser;
+  }
+
+  @post('/forgotPassword')
+  @response(200, ForgotPasswordResponse)
+  async forgot(
+    @requestBody(ForgotPasswordRequestBody) forgotPasswordRequest: User,
+  ): Promise<object> {
+
+    const {email} = forgotPasswordRequest;
+    const user = await this.userManagementService.requestPasswordReset(email);
+
+    const message: Notification = new Notification({
+      subject: "重置密码",
+      body: `请重置密码follow by link: ${user.resetKey}`,
+      receiver: {"to": [{"id": user.email}]},
+      sentDate: new Date(),
+      type: MessageType.Email,
+    });
+
+    await this.notifProvider.publish(message);
+
+    return {
+      error: false,
+      message: `一封邮件已发送到您的邮箱${user.email}`
+    };
   }
 }
