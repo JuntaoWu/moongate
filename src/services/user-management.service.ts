@@ -1,4 +1,4 @@
-import {MyUserService, User, UserRepository} from '@loopback/authentication-jwt';
+import {Credentials, MyUserService, User, UserRepository} from '@loopback/authentication-jwt';
 import {BindingScope, injectable} from '@loopback/core';
 import {repository} from '@loopback/repository';
 import {HttpErrors} from '@loopback/rest';
@@ -10,6 +10,16 @@ export class UserManagementService extends MyUserService {
 
   constructor(@repository(UserRepository) userRepository: UserRepository) {
     super(userRepository);
+  }
+
+  async verifyCredentials(credentials: Credentials): Promise<User> {
+    const foundUser = await super.verifyCredentials(credentials);
+
+    if (!foundUser || !foundUser.emailVerified) {
+      throw new HttpErrors.NotFound(`customer isn't exist or isn't active, please contact admin`);
+    } else {
+      return foundUser;
+    }
   }
 
   async requestPasswordReset(email: string): Promise<User> {
