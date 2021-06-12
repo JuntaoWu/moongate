@@ -11,7 +11,7 @@ import {
   UserServiceBindings
 } from '@loopback/authentication-jwt';
 import {inject} from '@loopback/core';
-import {model, property, repository} from '@loopback/repository';
+import {hasMany, model, property, repository} from '@loopback/repository';
 import {
   get, HttpErrors, param, post,
   requestBody, Response, RestBindings,
@@ -22,7 +22,7 @@ import {genSalt, hash} from 'bcryptjs';
 import _ from 'lodash';
 import {INotification, MessageType, NotificationBindings} from 'loopback4-notifications';
 import {v4 as uuidv4} from 'uuid';
-import {Notification} from '../models';
+import {Notification, TransactionHistory} from '../models';
 import {UserManagementService} from '../services/user-management.service';
 
 @model()
@@ -32,6 +32,10 @@ export class NewUserRequest extends User {
     required: true,
   })
   password: string;
+
+  @hasMany(() => TransactionHistory)
+  transactionHistories: TransactionHistory[];
+
 }
 
 const CredentialsSchema: SchemaObject = {
