@@ -1,0 +1,19 @@
+version: "3.7"
+x-logging:
+  &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "10"
+    mode: "non-blocking"
+    max-buffer-size: "4m"
+    tag: "{{.ImageName}}"
+
+services:
+  moongate_database_mongo:
+    ports:
+      - 17017:27017
+  moongate_service:
+    ports:
+      - 13080:3000
+    logging: *default-logging
