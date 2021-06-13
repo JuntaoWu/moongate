@@ -116,7 +116,7 @@ export class ResetPasswordController {
           <p>Hello, ${user.email}</p>
           <p style="color: red;">We received a request to reset the password for your account with email address: ${user.email}</p>
           <p>To reset your password click on the link provided below</p>
-          <a href="${process.env.APPLICATION_URL}/reset-password-finish.html?token=${user.resetKey}">Reset your password link</a>
+          <a href="${process.env.APPLICATION_URL}${process.env.PATH_RESET_PASSWORD}?token=${user.resetKey}">Reset your password link</a>
           <p>If you didn’t request to reset your password, please ignore this email or reset your password to protect your account.</p>
           <p>Thanks</p>
           <p>LoopBack'ers at Shoppy</p>
