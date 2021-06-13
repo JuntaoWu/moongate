@@ -22,6 +22,7 @@ import {genSalt, hash} from 'bcryptjs';
 import _ from 'lodash';
 import {INotification, MessageType, NotificationBindings} from 'loopback4-notifications';
 import {v4 as uuidv4} from 'uuid';
+import {Status} from '../constant';
 import {Investment, Notification, TransactionHistory} from '../models';
 import {UserManagementService} from '../services/user-management.service';
 
@@ -87,9 +88,6 @@ export class UserController {
             schema: {
               type: 'object',
               properties: {
-                token: {
-                  type: 'string',
-                },
                 "data": {type: 'object'},
                 "status": {type: 'string'},
                 "errorCode": {type: 'number'},
@@ -111,7 +109,12 @@ export class UserController {
 
     // create a JSON Web Token based on the user profile
     const token = await this.jwtService.generateToken(userProfile);
-    return {token};
+    return {
+      "data": {token},
+      "status": Status.SUCCESS.toString(),
+      "errorCode": "",
+      "errorMessage": ""
+    };
 
   }
 
@@ -123,7 +126,13 @@ export class UserController {
         content: {
           'application/json': {
             schema: {
-              type: 'string',
+              type: 'object',
+              properties: {
+                "data": {type: 'object'},
+                "status": {type: 'string'},
+                "errorCode": {type: 'number'},
+                "errorMessage": {type: 'string'}
+              }
             },
           },
         },
@@ -133,8 +142,13 @@ export class UserController {
   async whoAmI(
     @inject(SecurityBindings.USER)
     currentUserProfile: UserProfile,
-  ): Promise<string> {
-    return currentUserProfile[securityId];
+  ): Promise<any> {
+    return {
+      "data": {"userId": currentUserProfile[securityId]},
+      "status": Status.SUCCESS.toString(),
+      "errorCode": "",
+      "errorMessage": ""
+    };
   }
 
   @post('/signup', {
@@ -144,7 +158,21 @@ export class UserController {
         content: {
           'application/json': {
             schema: {
-              'x-ts-type': User,
+              type: 'object',
+              properties: {
+                status: {
+                  type: 'string'
+                },
+                data: {
+                  type: 'object',
+                },
+                errorCode: {
+                  type: 'string'
+                },
+                errorMessage: {
+                  type: 'string'
+                }
+              },
             },
           },
         },
@@ -153,7 +181,7 @@ export class UserController {
   })
   async signUp(
     @requestBody(CredentialsRequestBody) newUserRequest: NewUserRequest,
-  ): Promise<User> {
+  ): Promise<any> {
     newUserRequest.username = newUserRequest.email;
     newUserRequest.emailVerified = false;
     newUserRequest.verificationToken = uuidv4();
@@ -182,7 +210,12 @@ export class UserController {
 
     await this.notifProvider.publish(message);
 
-    return savedUser;
+    return {
+      "data": savedUser,
+      "status": Status.SUCCESS.toString(),
+      "errorCode": "",
+      "errorMessage": ""
+    };
   }
 
   @get('/acitveUser', {

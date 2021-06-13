@@ -24,7 +24,8 @@ import {
   response
 } from '@loopback/rest';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
-import {TransactionHistory, TransactionHistoryWithRelations} from '../models';
+import {Status} from '../constant';
+import {TransactionHistory} from '../models';
 import {TransactionHistoryRepository} from '../repositories';
 
 export class TransactionHistoryController {
@@ -79,8 +80,13 @@ export class TransactionHistoryController {
     content: {
       'application/json': {
         schema: {
-          type: 'array',
-          items: getModelSchemaRef(TransactionHistory, {includeRelations: true}),
+          type: 'object',
+          properties: {
+            "data": {type: 'object'},
+            "status": {type: 'string'},
+            "errorCode": {type: 'number'},
+            "errorMessage": {type: 'string'}
+          }
         },
       },
     },
@@ -89,8 +95,8 @@ export class TransactionHistoryController {
     @inject(SecurityBindings.USER)
     currentUserProfile: UserProfile,
     @param.filter(TransactionHistory) filter?: Filter<TransactionHistory>,
-  ): Promise<(TransactionHistoryWithRelations | undefined)[]> {
-    return (await this.transactionHistoryRepository
+  ): Promise<any> {
+    const result = (await this.transactionHistoryRepository
       .find({
         ...filter,
         where: {userId: currentUserProfile[securityId]},
@@ -99,6 +105,12 @@ export class TransactionHistoryController {
       .map(value => {
         return {...value, user: value.user, amount: value.amount.toString()} as any;
       });
+    return {
+      "data": result,
+      "status": Status.SUCCESS.toString(),
+      "errorCode": "",
+      "errorMessage": ""
+    }
   }
 
   @patch('/transaction-histories')
