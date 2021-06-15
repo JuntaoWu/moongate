@@ -3,9 +3,9 @@
 import {authenticate} from '@loopback/authentication';
 import {inject} from '@loopback/core';
 import {repository} from '@loopback/repository';
-import {get, getModelSchemaRef, response} from '@loopback/rest';
+import {get, response} from '@loopback/rest';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
-import {Investment} from '../models';
+import {Status} from '../constant';
 import {InvestmentRepository} from '../repositories';
 
 // import {inject} from '@loopback/core';
@@ -24,34 +24,51 @@ export class InvestmentController {
     content: {
       'application/json': {
         schema: {
-          type: 'array',
-          items: getModelSchemaRef(Investment, {includeRelations: true}),
+          type: 'object',
+          properties: {
+            "data": {type: 'object'},
+            "status": {type: 'string'},
+            "errorCode": {type: 'number'},
+            "errorMessage": {type: 'string'}
+          }
         },
-      },
+      }
     },
   })
   async find(
     @inject(SecurityBindings.USER)
     currentUserProfile: UserProfile
-  ): Promise<(Investment)> {
+  ): Promise<any> {
     const investmentResult = await this.investmentRepository
       .findOne({
         where: {userId: currentUserProfile[securityId]}
       })
     if (investmentResult) {
-      return {
+      const result = {
         ...investmentResult,
         purchasedTotal: investmentResult.purchasedTotal.toString(),
         releasedTotal: investmentResult.releasedTotal.toString(),
         lockedTotal: investmentResult.lockedTotal.toString()
-      } as any
+      };
+      return {
+        "data": result,
+        "status": Status.SUCCESS.toString(),
+        "errorCode": "",
+        "errorMessage": ""
+      }
     }
     else {
-      return {
+      const result = {
         purchasedTotal: 0,
         releasedTotal: 0,
         lockedTotal: 0
-      } as Investment
+      }
+      return {
+        "data": result,
+        "status": Status.SUCCESS.toString(),
+        "errorCode": "",
+        "errorMessage": ""
+      }
     }
 
   }
