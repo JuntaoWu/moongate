@@ -182,6 +182,25 @@ export class UserController {
   async signUp(
     @requestBody(CredentialsRequestBody) newUserRequest: NewUserRequest,
   ): Promise<any> {
+    const existingUser = await this.userRepository.findOne({where: {email: newUserRequest.email}});
+    if (existingUser) {
+      if (existingUser.emailVerified) {
+        return {
+          "data": "",
+          "status": Status.FAILED.toString(),
+          "errorCode": "400",
+          "errorMessage": "用户已存在，是否忘记密码？"
+        };
+      } else {
+        return {
+          "data": "",
+          "status": Status.WARRING.toString(),
+          "errorCode": "400",
+          "errorMessage": "用户已存在，请检查邮箱激活邮件"
+        };
+      }
+    }
+
     newUserRequest.username = newUserRequest.email;
     newUserRequest.emailVerified = false;
     newUserRequest.verificationToken = uuidv4();
