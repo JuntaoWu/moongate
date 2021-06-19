@@ -14,14 +14,44 @@ import {
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 import {INotification, MessageType, NotificationBindings} from 'loopback4-notifications';
 import moment from 'moment';
-import {Status, TransactionActivey, TransferStatus} from '../constant';
+import {Status, TransactionActivey, TransactionStatus, TransferStatus} from '../constant';
 import {Notification, TransactionHistory, Transfer, TransferRequest} from '../models';
 import {InvestmentRepository, TransactionHistoryRepository, TransferRepository} from '../repositories';
 
 const CreateTransferSchema: SchemaObject = {
   type: 'object',
-  required: ['email', 'amount'],
+  required: ['receiver', 'amount'],
   properties: {
+    receiver: {
+      type: 'string',
+      description: '目标username',
+      example: 'User123456'
+    },
+    amount: {
+      type: 'number',
+      description: '转账金额',
+      example: '1.23'
+    },
+  }
+};
+
+export const CreateTransferRequestBody = {
+  description: 'The input of createTransfer function',
+  require: true,
+  content: {
+    'application/json': {schema: CreateTransferSchema},
+  }
+};
+
+const AdminCreateTransferSchema: SchemaObject = {
+  type: 'object',
+  required: ['sender', 'receiver', 'amount'],
+  properties: {
+    sender: {
+      type: 'string',
+      description: '发送username',
+      example: 'User123456'
+    },
     receiver: {
       type: 'string',
       description: '目标username',
@@ -35,11 +65,11 @@ const CreateTransferSchema: SchemaObject = {
   }
 };
 
-export const CreateTransferRequestBody = {
+export const AdminCreateTransferRequestBody = {
   description: 'The input of createTransfer function',
   require: true,
   content: {
-    'application/json': {schema: CreateTransferSchema},
+    'application/json': {schema: AdminCreateTransferSchema},
   }
 };
 
@@ -125,16 +155,17 @@ export class TransferController {
       }
     }
 
-    let transfer = new Transfer();
-    transfer.userId = currentUserProfile[securityId];
-    transfer.receiver = transferRequset.receiver;
-    transfer.amount = transferRequset.amount;
-    transfer.date = new Date();
-    transfer.status = TransferStatus.PENDING;
-    const result = await this.transferRepository.create(transfer);
-
     const currentUser = await this.userRepository.findOne({where: {id: currentUserProfile[securityId]}})
+
     if (currentUser) {
+      let transfer = new Transfer();
+      transfer.userId = currentUserProfile[securityId];
+      transfer.sender = currentUser.username as any;
+      transfer.receiver = transferRequset.receiver;
+      transfer.amount = transferRequset.amount;
+      transfer.createDate = new Date();
+      transfer.status = TransferStatus.PENDING;
+      const result = await this.transferRepository.create(transfer);
       const message: Notification = new Notification({
         subject: "Activate Transfer",
         body: `<div>
@@ -152,15 +183,15 @@ export class TransferController {
         sentDate: new Date(),
         type: MessageType.Email,
       });
-
       await this.notifProvider.publish(message);
+      return {
+        "data": result,
+        "status": Status.SUCCESS.toString(),
+        "errorCode": "",
+        "errorMessage": ""
+      }
     }
-    return {
-      "data": result,
-      "status": Status.SUCCESS.toString(),
-      "errorCode": "",
-      "errorMessage": ""
-    }
+
   }
 
   @authenticate('jwt')
@@ -366,6 +397,8 @@ export class TransferController {
           transactionHistoryModel.activity = TransactionActivey.TRNASFER;
           transactionHistoryModel.amount = -parseFloat(transferAmount);
           transactionHistoryModel.date = new Date()
+          transactionHistoryModel.status = TransactionStatus.ACTIVE;
+          transactionHistoryModel.transferId = transferId;
           await this.transactionHistoryRepository.create(transactionHistoryModel);
         }
 
@@ -393,7 +426,9 @@ export class TransferController {
           transactionHistoryModel.userId = targetUser.id;
           transactionHistoryModel.activity = TransactionActivey.TRNASFER;
           transactionHistoryModel.amount = parseFloat(transferAmount);
-          transactionHistoryModel.date = new Date()
+          transactionHistoryModel.date = new Date();
+          transactionHistoryModel.status = TransactionStatus.ACTIVE;
+          transactionHistoryModel.transferId = transferId;
           await this.transactionHistoryRepository.create(transactionHistoryModel);
         }
 
@@ -510,6 +545,206 @@ export class TransferController {
     }
     catch (e) {
       throw new HttpErrors.InternalServerError(e);
+    }
+  }
+
+  @authenticate('jwt')
+  @post('/transfer/admin')
+  @response(200, {
+    description: 'Transfer model instance',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          title: 'ForgotPasswordResponse',
+          properties: {
+            "data": {type: 'object'},
+            "status": {type: 'string'},
+            "errorCode": {type: 'number'},
+            "errorMessage": {type: 'string'}
+          },
+        },
+      }
+    },
+  })
+  async adminTransfer(
+    @inject(SecurityBindings.USER)
+    currentUserProfile: UserProfile,
+    @requestBody(AdminCreateTransferRequestBody) transferRequset: TransferRequest,
+  ): Promise<any> {
+
+    const senderUser = await this.userRepository.findOne({where: {username: transferRequset.sender}})
+    if (!senderUser) {
+      return {
+        "data": {},
+        "status": Status.FAILED.toString(),
+        "errorCode": "400",
+        "errorMessage": "current sender user doesn't exist"
+      }
+    }
+
+    if (!senderUser.emailVerified) {
+      return {
+        "data": {},
+        "status": Status.FAILED.toString(),
+        "errorCode": "400",
+        "errorMessage": "current sender user isn't active"
+      }
+    }
+
+    const targetUser = await this.userRepository.findOne({where: {username: transferRequset.receiver}});
+    if (!targetUser) {
+      return {
+        "data": {},
+        "status": Status.FAILED.toString(),
+        "errorCode": "400",
+        "errorMessage": "current target user doesn't exist"
+      }
+    }
+
+    if (!targetUser.emailVerified) {
+      return {
+        "data": {},
+        "status": Status.FAILED.toString(),
+        "errorCode": "400",
+        "errorMessage": "current target user isn't active"
+      }
+    }
+
+
+    const investmentResult = await this.investmentRepository
+      .findOne({
+        where: {userId: senderUser.id}
+      })
+
+    const availableAmount = investmentResult && investmentResult.lockedTotal && investmentResult.lockedTotal.toString();
+
+    if (!investmentResult || !availableAmount) {
+      return {
+        "data": {},
+        "status": Status.FAILED.toString(),
+        "errorCode": "400",
+        "errorMessage": "current user don't have any investment record"
+      }
+    }
+    if ((parseFloat(availableAmount) - transferRequset.amount) < 0) {
+      return {
+        "data": {},
+        "status": Status.FAILED.toString(),
+        "errorCode": "400",
+        "errorMessage": "current user locked amount less than transfer amount"
+      }
+    }
+
+
+    if (senderUser && targetUser) {
+      let transfer = new Transfer();
+      transfer.userId = senderUser.id;
+      transfer.sender = senderUser.username as any;
+      transfer.receiver = targetUser.username as any;
+      transfer.amount = transferRequset.amount;
+      transfer.createDate = new Date();
+      transfer.status = TransferStatus.DONE;
+      const result = await this.transferRepository.create(transfer);
+
+      let originalPurchasedTotal = undefined;
+      let currentPurchasedTotal = undefined;
+      let originalLockedTotal = undefined;
+      let currentLockedTotal = undefined
+      let transactionHistoryModel = undefined;
+
+      /**update current user investment */
+      const senderInvestment = await this.investmentRepository.findOne({where: {userId: senderUser.id}});
+      if (senderInvestment) {
+        originalPurchasedTotal = senderInvestment.purchasedTotal.toString();
+        currentPurchasedTotal = parseFloat(originalPurchasedTotal) - transferRequset.amount;
+
+        originalLockedTotal = senderInvestment.lockedTotal.toString();
+        currentLockedTotal = parseFloat(originalLockedTotal) - transferRequset.amount;
+
+        await this.investmentRepository.updateById(senderInvestment.id, {
+          purchasedTotal: currentPurchasedTotal,
+          lockedTotal: currentLockedTotal
+        })
+      }
+
+      /**insert transfer record to transaction history */
+      transactionHistoryModel = new TransactionHistory();
+      transactionHistoryModel.userId = senderUser.userId;
+      transactionHistoryModel.activity = TransactionActivey.TRNASFER;
+      transactionHistoryModel.amount = -transferRequset.amount;
+      transactionHistoryModel.date = new Date()
+      transactionHistoryModel.status = TransactionStatus.ACTIVE;
+      transactionHistoryModel.transferId = result.id;
+      await this.transactionHistoryRepository.create(transactionHistoryModel);
+
+      /**update target user investment */
+      const targetInvestment = await this.investmentRepository.findOne({where: {userId: targetUser.id}});
+      if (targetInvestment) {
+        originalPurchasedTotal = targetInvestment.purchasedTotal.toString();
+        currentPurchasedTotal = parseFloat(originalPurchasedTotal) + transferRequset.amount;
+
+        originalLockedTotal = targetInvestment.lockedTotal.toString();
+        currentLockedTotal = parseFloat(originalLockedTotal) + transferRequset.amount;
+
+        await this.investmentRepository.updateById(targetInvestment.id, {
+          purchasedTotal: currentPurchasedTotal,
+          lockedTotal: currentLockedTotal
+        });
+      }
+
+      /**insert transfer record to transaction history */
+      transactionHistoryModel = new TransactionHistory();
+      transactionHistoryModel.userId = targetUser.id;
+      transactionHistoryModel.activity = TransactionActivey.TRNASFER;
+      transactionHistoryModel.amount = transferRequset.amount;
+      transactionHistoryModel.date = new Date()
+      transactionHistoryModel.status = TransactionStatus.ACTIVE;
+      transactionHistoryModel.transferId = result.id;
+      await this.transactionHistoryRepository.create(transactionHistoryModel);
+
+      return {
+        "data": result,
+        "status": Status.SUCCESS.toString(),
+        "errorCode": "",
+        "errorMessage": ""
+      }
+    }
+  }
+
+  @authenticate('jwt')
+  @get('/transfer/admin')
+  @response(200, {
+    description: 'Array of Transfer model instances',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            "data": {type: 'object'},
+            "status": {type: 'string'},
+            "errorCode": {type: 'number'},
+            "errorMessage": {type: 'string'}
+          }
+        },
+      },
+    },
+  })
+  async findByAdmin(
+    @inject(SecurityBindings.USER)
+    currentUserProfile: UserProfile,
+    @param.filter(Transfer) filter?: Filter<Transfer>,
+  ): Promise<any> {
+    const result = (await this.transferRepository
+      .find(filter))
+      .map(value => {
+        return {...value, amount: value.amount.toString()} as any;
+      });
+    return {
+      "data": result,
+      "status": Status.SUCCESS.toString(),
+      "errorCode": "",
+      "errorMessage": ""
     }
   }
 

@@ -8,7 +8,8 @@ export const Status = {
 export const TransferStatus = {
   PENDING: "PENDING",
   DONE: "DONE",
-  CANCELLED: "CANCELLED"
+  CANCELLED: "CANCELLED",
+  DELETED: "DELETED"
 }
 
 export const TransactionActivey = {

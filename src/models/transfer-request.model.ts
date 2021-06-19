@@ -4,6 +4,8 @@ import {Model, model, property} from '@loopback/repository';
 export class TransferRequest extends Model {
 
   @property()
+  sender: string;
+  @property()
   receiver: string;
   @property()
   amount: number;

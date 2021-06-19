@@ -42,6 +42,11 @@ export class TransactionHistory extends Entity {
   })
   status: string;
 
+  @property({
+    type: 'string'
+  })
+  transferId: string;
+
   constructor(data?: Partial<TransactionHistory>) {
     super(data);
   }

@@ -16,6 +16,11 @@ export class Transfer extends Entity {
   @property({
     type: 'string'
   })
+  sender: string;
+
+  @property({
+    type: 'string'
+  })
   receiver: string;
 
   @property({
@@ -29,12 +34,22 @@ export class Transfer extends Entity {
   @property({
     type: 'date'
   })
-  date: Date;
+  createDate: Date;
 
   @property({
     type: 'string'
   })
   status: string;
+
+  @property({
+    type: 'date'
+  })
+  updateDate: Date;
+
+  @property({
+    type: 'string'
+  })
+  recordNumber: string;
 
 
   constructor(data?: Partial<Transfer>) {
