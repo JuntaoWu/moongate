@@ -1,3 +1,5 @@
+import {authenticate} from '@loopback/authentication';
+import {authorize} from '@loopback/authorization';
 import {
   CountSchema,
   Filter, model,
@@ -25,6 +27,7 @@ class NewMoongateUserRequest extends MoongateUser {
   password: string;
 }
 
+@authorize({allowedRoles: ['admin']})
 export class ManagementUserController {
   constructor(
     @repository(MoongateUserRepository)
@@ -33,6 +36,7 @@ export class ManagementUserController {
     public investmentRepository: InvestmentRepository,
   ) { }
 
+  @authenticate('jwt')
   @post('/management-user')
   @response(200, {
     description: 'MoongateUser model instance',
@@ -95,6 +99,7 @@ export class ManagementUserController {
     };
   }
 
+  @authenticate('jwt')
   @get('/management-user/count')
   @response(200, {
     description: 'MoongateUser model count',
@@ -112,6 +117,7 @@ export class ManagementUserController {
     };
   }
 
+  @authenticate('jwt')
   @get('/management-user')
   @response(200, {
     description: 'Array of MoongateUser model instances',
@@ -137,6 +143,7 @@ export class ManagementUserController {
     };
   }
 
+  @authenticate('jwt')
   @get('/management-user/{id}')
   @response(200, {
     description: 'MoongateUser model instance',
@@ -157,6 +164,7 @@ export class ManagementUserController {
     };
   }
 
+  @authenticate('jwt')
   @patch('/management-user/{id}')
   @response(204, {
     description: 'MoongateUser PATCH success',

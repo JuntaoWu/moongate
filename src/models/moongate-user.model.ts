@@ -63,6 +63,12 @@ export class MoongateUser extends User {
   })
   updatedAt: Date;
 
+  @property({
+    type: 'array',
+    itemType: 'string'
+  })
+  roles: string[]
+
   constructor(data?: Partial<MoongateUser>) {
     super(data);
   }

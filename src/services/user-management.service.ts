@@ -22,6 +22,7 @@ export class UserManagementService implements UserService<MoongateUser, Credenti
       name: user.username,
       id: user.id,
       email: user.email,
+      roles: user.roles
     };
   }
 
@@ -70,7 +71,7 @@ export class UserManagementService implements UserService<MoongateUser, Credenti
     }
 
     if (foundUser.locked) {
-      throw new HttpErrors.Unauthorized(`The user has been locked already, please contact admin`);
+      throw new HttpErrors.Forbidden(`The user has been locked temporarily, please contact admin`);
     }
 
     return foundUser;
