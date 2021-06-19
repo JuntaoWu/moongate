@@ -24,6 +24,7 @@ import {INotification, MessageType, NotificationBindings} from 'loopback4-notifi
 import {v4 as uuidv4} from 'uuid';
 import {Status} from '../constant';
 import {Investment, Notification, TransactionHistory} from '../models';
+import {InvestmentRepository} from '../repositories';
 import {UserManagementService} from '../services/user-management.service';
 
 @model()
@@ -77,6 +78,7 @@ export class UserController {
     @repository(UserRepository) protected userRepository: UserRepository,
     @inject(NotificationBindings.NotificationProvider)
     private readonly notifProvider: INotification,
+    @repository(InvestmentRepository) protected investmentRepository: InvestmentRepository,
   ) { }
 
   @post('/users/login', {
@@ -265,6 +267,12 @@ export class UserController {
     }
     else {
       await this.userRepository.updateById(user.id, {emailVerified: true});
+      await this.investmentRepository.create(new Investment({
+        userId: user.id,
+        purchasedTotal: 0,
+        releasedTotal: 0,
+        lockedTotal: 0
+      }));
       return res.redirect(`${process.env.APPLICATION_URL}${process.env.PATH_REDIRECT}` as string);
     }
   }
