@@ -10,7 +10,6 @@ import {InvestmentRepository} from '../repositories';
 
 // import {inject} from '@loopback/core';
 
-
 export class InvestmentController {
   constructor(
     @repository(InvestmentRepository)

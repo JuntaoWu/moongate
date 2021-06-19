@@ -62,11 +62,12 @@ export class MoongateUserRepository extends DefaultCrudRepository<
         if (counter?.value) {
           console.log(counter.value);
           ++counter.value;
+          await this.counterRepository.updateById(counter.getId(), counter);
         } else {
           counter = new Counter({value: this.userSerialNumberInitial, collection: 'MoongateUser'});
+          await this.counterRepository.save(counter);
         }
         ctx.instance.username = `User${counter.value.toString().padStart(this.userSerialNumberLength, this.userSerialNumberPadding)}`
-        await this.counterRepository.save(counter);
       }
     });
     return modelClass;

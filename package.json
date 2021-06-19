@@ -64,6 +64,7 @@
     "loopback-connector-mongodb": "^5.5.0",
     "loopback-connector-rest": "^4.0.1",
     "loopback4-notifications": "^1.4.0",
+    "moment": "^2.29.1",
     "tslib": "^2.0.0",
     "uuid": "^8.3.2"
   },

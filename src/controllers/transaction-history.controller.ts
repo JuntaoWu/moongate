@@ -1,26 +1,13 @@
 import {authenticate} from '@loopback/authentication';
 import {inject} from '@loopback/core';
 import {
-  Count,
   CountSchema,
-  Filter,
-  FilterExcludingWhere,
-  repository,
+  Filter, repository,
   Where
 } from '@loopback/repository';
 import {
-  del, get,
-  getModelSchemaRef, param,
-
-
-  patch, post,
-
-
-
-
-  put,
-
-  requestBody,
+  get,
+  getModelSchemaRef, param, post, requestBody,
   response
 } from '@loopback/rest';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
@@ -69,8 +56,14 @@ export class TransactionHistoryController {
     @inject(SecurityBindings.USER)
     currentUserProfile: UserProfile,
     @param.where(TransactionHistory) where?: Where<TransactionHistory>,
-  ): Promise<Count> {
-    return this.transactionHistoryRepository.count({...where, userId: currentUserProfile[securityId]});
+  ): Promise<any> {
+    const count = await this.transactionHistoryRepository.count({...where, userId: currentUserProfile[securityId]});
+    return {
+      "data": count,
+      "status": Status.SUCCESS.toString(),
+      "errorCode": "",
+      "errorMessage": ""
+    };
   }
 
   @authenticate('jwt')
@@ -113,75 +106,75 @@ export class TransactionHistoryController {
     }
   }
 
-  @patch('/transaction-histories')
-  @response(200, {
-    description: 'TransactionHistory PATCH success count',
-    content: {'application/json': {schema: CountSchema}},
-  })
-  async updateAll(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(TransactionHistory, {partial: true}),
-        },
-      },
-    })
-    transactionHistory: TransactionHistory,
-    @param.where(TransactionHistory) where?: Where<TransactionHistory>,
-  ): Promise<Count> {
-    return this.transactionHistoryRepository.updateAll(transactionHistory, where);
-  }
+  // @patch('/transaction-histories')
+  // @response(200, {
+  //   description: 'TransactionHistory PATCH success count',
+  //   content: {'application/json': {schema: CountSchema}},
+  // })
+  // async updateAll(
+  //   @requestBody({
+  //     content: {
+  //       'application/json': {
+  //         schema: getModelSchemaRef(TransactionHistory, {partial: true}),
+  //       },
+  //     },
+  //   })
+  //   transactionHistory: TransactionHistory,
+  //   @param.where(TransactionHistory) where?: Where<TransactionHistory>,
+  // ): Promise<Count> {
+  //   return this.transactionHistoryRepository.updateAll(transactionHistory, where);
+  // }
 
-  @get('/transaction-histories/{id}')
-  @response(200, {
-    description: 'TransactionHistory model instance',
-    content: {
-      'application/json': {
-        schema: getModelSchemaRef(TransactionHistory, {includeRelations: true}),
-      },
-    },
-  })
-  async findById(
-    @param.path.string('id') id: string,
-    @param.filter(TransactionHistory, {exclude: 'where'}) filter?: FilterExcludingWhere<TransactionHistory>
-  ): Promise<TransactionHistory> {
-    return this.transactionHistoryRepository.findById(id, filter);
-  }
+  // @get('/transaction-histories/{id}')
+  // @response(200, {
+  //   description: 'TransactionHistory model instance',
+  //   content: {
+  //     'application/json': {
+  //       schema: getModelSchemaRef(TransactionHistory, {includeRelations: true}),
+  //     },
+  //   },
+  // })
+  // async findById(
+  //   @param.path.string('id') id: string,
+  //   @param.filter(TransactionHistory, {exclude: 'where'}) filter?: FilterExcludingWhere<TransactionHistory>
+  // ): Promise<TransactionHistory> {
+  //   return this.transactionHistoryRepository.findById(id, filter);
+  // }
 
-  @patch('/transaction-histories/{id}')
-  @response(204, {
-    description: 'TransactionHistory PATCH success',
-  })
-  async updateById(
-    @param.path.string('id') id: string,
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(TransactionHistory, {partial: true}),
-        },
-      },
-    })
-    transactionHistory: TransactionHistory,
-  ): Promise<void> {
-    await this.transactionHistoryRepository.updateById(id, transactionHistory);
-  }
+  // @patch('/transaction-histories/{id}')
+  // @response(204, {
+  //   description: 'TransactionHistory PATCH success',
+  // })
+  // async updateById(
+  //   @param.path.string('id') id: string,
+  //   @requestBody({
+  //     content: {
+  //       'application/json': {
+  //         schema: getModelSchemaRef(TransactionHistory, {partial: true}),
+  //       },
+  //     },
+  //   })
+  //   transactionHistory: TransactionHistory,
+  // ): Promise<void> {
+  //   await this.transactionHistoryRepository.updateById(id, transactionHistory);
+  // }
 
-  @put('/transaction-histories/{id}')
-  @response(204, {
-    description: 'TransactionHistory PUT success',
-  })
-  async replaceById(
-    @param.path.string('id') id: string,
-    @requestBody() transactionHistory: TransactionHistory,
-  ): Promise<void> {
-    await this.transactionHistoryRepository.replaceById(id, transactionHistory);
-  }
+  // @put('/transaction-histories/{id}')
+  // @response(204, {
+  //   description: 'TransactionHistory PUT success',
+  // })
+  // async replaceById(
+  //   @param.path.string('id') id: string,
+  //   @requestBody() transactionHistory: TransactionHistory,
+  // ): Promise<void> {
+  //   await this.transactionHistoryRepository.replaceById(id, transactionHistory);
+  // }
 
-  @del('/transaction-histories/{id}')
-  @response(204, {
-    description: 'TransactionHistory DELETE success',
-  })
-  async deleteById(@param.path.string('id') id: string): Promise<void> {
-    await this.transactionHistoryRepository.deleteById(id);
-  }
+  // @del('/transaction-histories/{id}')
+  // @response(204, {
+  //   description: 'TransactionHistory DELETE success',
+  // })
+  // async deleteById(@param.path.string('id') id: string): Promise<void> {
+  //   await this.transactionHistoryRepository.deleteById(id);
+  // }
 }

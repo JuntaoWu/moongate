@@ -213,7 +213,7 @@ export class UserController {
     const message: Notification = new Notification({
       subject: "Activate User",
       body: `<div>
-          <p>Hi, ${savedUser.email}</p>
+          <p>Hi, ${savedUser.username}</p>
           <p>Weclome to Moongate!</p>
           <p>Please take a second to confirm ${savedUser.email} as your email address</p>
           <p><a href="${process.env.API_URL}/acitveUser?token=${savedUser.verificationToken}">Activations Link</a></p>
@@ -235,6 +235,7 @@ export class UserController {
       "errorMessage": ""
     };
   }
+
 
   @get('/acitveUser', {
     responses: {
