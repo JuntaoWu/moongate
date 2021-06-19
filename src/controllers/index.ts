@@ -3,3 +3,4 @@ export * from './reset-password.controller';
 
 export * from './transaction-history.controller';
 export * from './investment.controller';
+export * from './transfer.controller';

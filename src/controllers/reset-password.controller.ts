@@ -113,7 +113,7 @@ export class ResetPasswordController {
     const message: Notification = new Notification({
       subject: "重置密码",
       body: `<div>
-          <p>Hello, ${user.email}</p>
+          <p>Hello, ${user.username}</p>
           <p style="color: red;">We received a request to reset the password for your account with email address: ${user.email}</p>
           <p>To reset your password click on the link provided below</p>
           <a href="${process.env.APPLICATION_URL}${process.env.PATH_RESET_PASSWORD}?token=${user.resetKey}">Reset your password link</a>
