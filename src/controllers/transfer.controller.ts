@@ -1,5 +1,6 @@
 import {authenticate} from '@loopback/authentication';
 import {UserRepository} from '@loopback/authentication-jwt';
+import {authorize} from '@loopback/authorization';
 import {inject} from '@loopback/core';
 import {
   CountSchema,
@@ -320,6 +321,7 @@ export class TransferController {
   //   await this.transferRepository.replaceById(id, transfer);
   // }
 
+  @authorize({allowedRoles: ['admin']})
   @authenticate('jwt')
   @del('/transfer/{id}')
   @response(204, {
@@ -663,6 +665,7 @@ export class TransferController {
     }
   }
 
+  @authorize({allowedRoles: ['admin']})
   @authenticate('jwt')
   @post('/transfer/admin')
   @response(200, {
@@ -827,6 +830,7 @@ export class TransferController {
     }
   }
 
+  @authorize({allowedRoles: ['admin']})
   @authenticate('jwt')
   @get('/transfer/count/admin')
   @response(200, {
@@ -847,6 +851,7 @@ export class TransferController {
     };
   }
 
+  @authorize({allowedRoles: ['admin']})
   @authenticate('jwt')
   @get('/transfer/admin')
   @response(200, {

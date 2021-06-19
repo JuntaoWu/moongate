@@ -1,17 +1,13 @@
 import {authenticate} from '@loopback/authentication';
 import {UserRepository} from '@loopback/authentication-jwt';
+import {authorize} from '@loopback/authorization';
 import {inject} from '@loopback/core';
 import {
-  Count,
-  CountSchema,
-  Filter,
-  FilterExcludingWhere,
-  repository,
+  Filter, repository,
   Where
 } from '@loopback/repository';
 import {
-  del, get,
-  getModelSchemaRef, HttpErrors, param, patch, post, put, requestBody,
+  del, get, HttpErrors, param, post, requestBody,
   response,
   SchemaObject
 } from '@loopback/rest';
@@ -55,6 +51,7 @@ export const CreateOrderRequestBody = {
   }
 };
 
+@authorize({allowedRoles: ['admin']})
 export class OrderController {
   constructor(
     @repository(OrderRepository)
@@ -264,70 +261,71 @@ export class OrderController {
     }
   }
 
-  @patch('/orders')
-  @response(200, {
-    description: 'Order PATCH success count',
-    content: {'application/json': {schema: CountSchema}},
-  })
-  async updateAll(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Order, {partial: true}),
-        },
-      },
-    })
-    order: Order,
-    @param.where(Order) where?: Where<Order>,
-  ): Promise<Count> {
-    return this.orderRepository.updateAll(order, where);
-  }
+  // @patch('/orders')
+  // @response(200, {
+  //   description: 'Order PATCH success count',
+  //   content: {'application/json': {schema: CountSchema}},
+  // })
+  // async updateAll(
+  //   @requestBody({
+  //     content: {
+  //       'application/json': {
+  //         schema: getModelSchemaRef(Order, {partial: true}),
+  //       },
+  //     },
+  //   })
+  //   order: Order,
+  //   @param.where(Order) where?: Where<Order>,
+  // ): Promise<Count> {
+  //   return this.orderRepository.updateAll(order, where);
+  // }
 
-  @get('/orders/{id}')
-  @response(200, {
-    description: 'Order model instance',
-    content: {
-      'application/json': {
-        schema: getModelSchemaRef(Order, {includeRelations: true}),
-      },
-    },
-  })
-  async findById(
-    @param.path.string('id') id: string,
-    @param.filter(Order, {exclude: 'where'}) filter?: FilterExcludingWhere<Order>
-  ): Promise<Order> {
-    return this.orderRepository.findById(id, filter);
-  }
+  // @get('/orders/{id}')
+  // @response(200, {
+  //   description: 'Order model instance',
+  //   content: {
+  //     'application/json': {
+  //       schema: getModelSchemaRef(Order, {includeRelations: true}),
+  //     },
+  //   },
+  // })
+  // async findById(
+  //   @param.path.string('id') id: string,
+  //   @param.filter(Order, {exclude: 'where'}) filter?: FilterExcludingWhere<Order>
+  // ): Promise<Order> {
+  //   return this.orderRepository.findById(id, filter);
+  // }
 
-  @patch('/orders/{id}')
-  @response(204, {
-    description: 'Order PATCH success',
-  })
-  async updateById(
-    @param.path.string('id') id: string,
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Order, {partial: true}),
-        },
-      },
-    })
-    order: Order,
-  ): Promise<void> {
-    await this.orderRepository.updateById(id, order);
-  }
+  // @patch('/orders/{id}')
+  // @response(204, {
+  //   description: 'Order PATCH success',
+  // })
+  // async updateById(
+  //   @param.path.string('id') id: string,
+  //   @requestBody({
+  //     content: {
+  //       'application/json': {
+  //         schema: getModelSchemaRef(Order, {partial: true}),
+  //       },
+  //     },
+  //   })
+  //   order: Order,
+  // ): Promise<void> {
+  //   await this.orderRepository.updateById(id, order);
+  // }
 
-  @put('/orders/{id}')
-  @response(204, {
-    description: 'Order PUT success',
-  })
-  async replaceById(
-    @param.path.string('id') id: string,
-    @requestBody() order: Order,
-  ): Promise<void> {
-    await this.orderRepository.replaceById(id, order);
-  }
+  // @put('/orders/{id}')
+  // @response(204, {
+  //   description: 'Order PUT success',
+  // })
+  // async replaceById(
+  //   @param.path.string('id') id: string,
+  //   @requestBody() order: Order,
+  // ): Promise<void> {
+  //   await this.orderRepository.replaceById(id, order);
+  // }
 
+  @authenticate('jwt')
   @del('/orders/{id}')
   @response(204, {
     description: 'Order DELETE success',
