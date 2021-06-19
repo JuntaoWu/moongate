@@ -8,11 +8,27 @@ export const Status = {
 export const TransferStatus = {
   PENDING: "PENDING",
   DONE: "DONE",
-  CANCELLED: "CANCELLED"
+  CANCELLED: "CANCELLED",
+  DELETED: "DELETED"
 }
 
 export const TransactionActivey = {
   PURCHASE: 'PURCHASE',
   RELEASE: 'RELEASE',
   TRNASFER: 'TRNASFER'
+}
+
+export const TransactionStatus = {
+  ACTIVE: 'ACTIVE',
+  DELETED: 'DELETED'
+}
+
+export const OrderStatus = {
+  ACTIVE: 'ACTIVE',
+  DELETED: 'DELETED'
+}
+
+export const OrderType = {
+  PURCHASE: 'PURCHASE',
+  RELEASE: 'RELEASE',
 }

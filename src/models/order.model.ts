@@ -1,8 +1,8 @@
-import {User, UserWithRelations} from '@loopback/authentication-jwt';
+import {User} from '@loopback/authentication-jwt';
 import {belongsTo, Entity, model, property} from '@loopback/repository';
 
 @model()
-export class TransactionHistory extends Entity {
+export class Order extends Entity {
 
   @property({
     type: 'string',
@@ -11,15 +11,18 @@ export class TransactionHistory extends Entity {
   })
   id: string;
 
-  @property({
-    type: 'date'
-  })
-  date: Date;
+  @belongsTo(() => User)
+  userId: string;
 
   @property({
     type: 'string'
   })
-  activity: string;
+  username: string;
+
+  @property({
+    type: 'string'
+  })
+  orderType: string;
 
   @property({
     type: 'string',
@@ -29,13 +32,20 @@ export class TransactionHistory extends Entity {
   })
   amount: number;
 
-  @belongsTo(() => User)
-  userId: string;
+  @property({
+    type: 'date'
+  })
+  createDate: Date;
+
+  @property({
+    type: 'date'
+  })
+  updateDate: Date;
 
   @property({
     type: 'string'
   })
-  orderId: string;
+  txid?: string;
 
   @property({
     type: 'string'
@@ -45,18 +55,16 @@ export class TransactionHistory extends Entity {
   @property({
     type: 'string'
   })
-  transferId: string;
+  recordNumber: string;
 
-  constructor(data?: Partial<TransactionHistory>) {
+
+  constructor(data?: Partial<Order>) {
     super(data);
   }
 }
 
-export interface TransactionHistoryRelations {
+export interface OrderRelations {
   // describe navigational properties here
-
-  user?: UserWithRelations;
-
 }
 
-export type TransactionHistoryWithRelations = TransactionHistory & TransactionHistoryRelations;
+export type OrderWithRelations = Order & OrderRelations;
