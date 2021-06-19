@@ -144,10 +144,10 @@ export class UserController {
     currentUserProfile: UserProfile,
   ): Promise<any> {
     return {
-      "data": {"userId": currentUserProfile[securityId]},
-      "status": Status.SUCCESS.toString(),
-      "errorCode": "",
-      "errorMessage": ""
+      data: {userId: currentUserProfile[securityId], username: currentUserProfile.name},
+      status: Status.SUCCESS.toString(),
+      errorCode: "",
+      errorMessage: ""
     };
   }
 
@@ -201,12 +201,11 @@ export class UserController {
       }
     }
 
-    newUserRequest.username = newUserRequest.email;
     newUserRequest.emailVerified = false;
     newUserRequest.verificationToken = uuidv4();
     const password = await hash(newUserRequest.password, await genSalt());
     const savedUser = await this.userRepository.create(
-      _.pick(newUserRequest, 'email', 'username', 'emailVerified', 'verificationToken'),
+      _.pick(newUserRequest, 'email', 'emailVerified', 'verificationToken'),
     );
 
     await this.userRepository.userCredentials(savedUser.id).create({password});
@@ -235,49 +234,6 @@ export class UserController {
       "errorCode": "",
       "errorMessage": ""
     };
-  }
-
-  @post('/resendVerificationEmail', {
-    responses: {
-      '200': {
-        description: 'User',
-        content: {
-          'application/json': {
-            schema: {
-              'x-ts-type': User,
-            },
-          },
-        },
-      },
-    },
-  })
-  async resendVerificationEmail(
-    @requestBody(CredentialsRequestBody) newUserRequest: NewUserRequest,
-  ): Promise<User> {
-    const user = await this.userRepository.findOne({where: {email: newUserRequest.email}});
-    if (!user) {
-      throw new HttpErrors.NotFound("Please make sure your email exists");
-    }
-
-    const message: Notification = new Notification({
-      subject: "Activate User",
-      body: `<div>
-          <p>Hi, ${user.email}</p>
-          <p>Weclome to Moongate!</p>
-          <p>Please take a second to confirm ${user.email} as your email address</p>
-          <p><a href="${process.env.API_URL}/acitveUser?token=${user.verificationToken}">Activations Link</a></p>
-          <p>Once you do, you'll be able to opt-in to notifactions of activity and access other features that require a valid email address.</p>
-          <p>Best Regards,</p>
-          <p>Team Moongate</p>
-      </div>`,
-      receiver: {"to": [{"id": user.email}]},
-      sentDate: new Date(),
-      type: MessageType.Email,
-    });
-
-    await this.notifProvider.publish(message);
-
-    return user;
   }
 
   @get('/acitveUser', {

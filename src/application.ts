@@ -22,6 +22,7 @@ import {
 } from 'loopback4-notifications';
 import path from 'path';
 import {DbDataSource} from './datasources';
+import {MoongateUserRepository} from './repositories';
 import {MySequence} from './sequence';
 import {UserManagementService} from './services';
 
@@ -69,6 +70,10 @@ export class MoongateApplication extends BootMixin(
 
     // UserManagementService
     this.bind(UserServiceBindings.USER_SERVICE).toClass(UserManagementService);
+    // Bind user and credentials repository
+    this.bind(UserServiceBindings.USER_REPOSITORY).toClass(
+      MoongateUserRepository,
+    );
 
     // Aws-Ses
     this.bind(NotificationBindings.Config).to({

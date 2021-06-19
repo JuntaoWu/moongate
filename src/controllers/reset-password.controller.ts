@@ -2,7 +2,7 @@ import {TokenService} from '@loopback/authentication';
 import {MyUserService, TokenServiceBindings, User, UserRepository, UserServiceBindings} from '@loopback/authentication-jwt';
 import {inject} from '@loopback/core';
 import {repository} from '@loopback/repository';
-import {post, requestBody, response, ResponseObject, SchemaObject} from '@loopback/rest';
+import {HttpErrors, post, requestBody, response, ResponseObject, SchemaObject} from '@loopback/rest';
 import {SecurityBindings, UserProfile} from '@loopback/security';
 import {genSalt, hash} from 'bcryptjs';
 import _ from 'lodash';
@@ -91,6 +91,49 @@ export class ResetPasswordController {
     private readonly notifProvider: INotification,
   ) { }
 
+
+  @post('/resendVerificationEmail', {
+    responses: {
+      '200': {
+        description: 'User',
+        content: {
+          'application/json': {
+            schema: {
+              'x-ts-type': User,
+            },
+          },
+        },
+      },
+    },
+  })
+  async resendVerificationEmail(
+    @requestBody(ForgotPasswordRequestBody) newUserRequest: User,
+  ): Promise<User> {
+    const user = await this.userRepository.findOne({where: {email: newUserRequest.email}});
+    if (!user) {
+      throw new HttpErrors.NotFound("Please make sure your email is correct.");
+    }
+
+    const message: Notification = new Notification({
+      subject: "Activate User",
+      body: `<div>
+          <p>Hi, ${user.email}</p>
+          <p>Weclome to Moongate!</p>
+          <p>Please take a second to confirm ${user.email} as your email address</p>
+          <p><a href="${process.env.API_URL}/acitveUser?token=${user.verificationToken}">Activations Link</a></p>
+          <p>Once you do, you'll be able to opt-in to notifactions of activity and access other features that require a valid email address.</p>
+          <p>Best Regards,</p>
+          <p>Team Moongate</p>
+      </div>`,
+      receiver: {"to": [{"id": user.email}]},
+      sentDate: new Date(),
+      type: MessageType.Email,
+    });
+
+    await this.notifProvider.publish(message);
+
+    return user;
+  }
 
   @post('/forgotPassword')
   @response(200, ForgotPasswordResponse)

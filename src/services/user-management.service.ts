@@ -1,28 +1,78 @@
-import {Credentials, MyUserService, User, UserRepository} from '@loopback/authentication-jwt';
+import {UserService} from '@loopback/authentication';
+import {Credentials} from '@loopback/authentication-jwt';
 import {BindingScope, injectable} from '@loopback/core';
 import {repository} from '@loopback/repository';
 import {HttpErrors} from '@loopback/rest';
+import {securityId, UserProfile} from '@loopback/security';
+import {compare} from 'bcryptjs';
 import {v4 as uuidv4} from 'uuid';
+import {MoongateUser, MoongateUserWithRelations} from '../models/moongate-user.model';
+import {MoongateUserRepository} from '../repositories';
 import {subtractDates} from '../utils/substract-dates';
 
 @injectable({scope: BindingScope.TRANSIENT})
-export class UserManagementService extends MyUserService {
+export class UserManagementService implements UserService<MoongateUser, Credentials> {
 
-  constructor(@repository(UserRepository) userRepository: UserRepository) {
-    super(userRepository);
+  constructor(@repository(MoongateUserRepository) private userRepository: MoongateUserRepository) {
   }
 
-  async verifyCredentials(credentials: Credentials): Promise<User> {
-    const foundUser = await super.verifyCredentials(credentials);
+  convertToUserProfile(user: MoongateUser): UserProfile {
+    return {
+      [securityId]: user.id,
+      name: user.username,
+      id: user.id,
+      email: user.email,
+    };
+  }
 
-    if (!foundUser || !foundUser.emailVerified) {
-      throw new HttpErrors.NotFound(`customer isn't exist or isn't active, please contact admin`);
+  //function to find user by id
+  async findUserById(id: string): Promise<MoongateUser & MoongateUserWithRelations> {
+    const userNotfound = 'invalid User';
+    const foundUser = await this.userRepository.findOne({
+      where: {id: id},
+    });
+
+    if (!foundUser) {
+      throw new HttpErrors.Unauthorized(userNotfound);
+    }
+    return foundUser;
+  }
+
+  async verifyCredentials(credentials: Credentials): Promise<MoongateUser> {
+
+    const invalidCredentialsError = 'Invalid email or password.';
+
+    const foundUser = await this.userRepository.findOne({
+      where: {email: credentials.email},
+    });
+    if (!foundUser) {
+      throw new HttpErrors.Unauthorized(invalidCredentialsError);
+    }
+
+    const credentialsFound = await this.userRepository.findCredentials(
+      foundUser.id,
+    );
+    if (!credentialsFound) {
+      throw new HttpErrors.Unauthorized(invalidCredentialsError);
+    }
+
+    const passwordMatched = await compare(
+      credentials.password,
+      credentialsFound.password,
+    );
+
+    if (!passwordMatched) {
+      throw new HttpErrors.Unauthorized(invalidCredentialsError);
+    }
+
+    if (!foundUser.emailVerified) {
+      throw new HttpErrors.Unauthorized(`customer isn't exist or isn't active, please contact admin`);
     } else {
       return foundUser;
     }
   }
 
-  async requestPasswordReset(email: string): Promise<User> {
+  async requestPasswordReset(email: string): Promise<MoongateUser> {
     const noAccountFoundError =
       'No account associated with the provided email address.';
     const foundUser = await this.userRepository.findOne({
@@ -50,7 +100,7 @@ export class UserManagementService extends MyUserService {
    * For first time reset request set reset count to 1 and assign same day timestamp
    * @param user
    */
-  async updateResetRequestLimit(user: User): Promise<User> {
+  async updateResetRequestLimit(user: MoongateUser): Promise<MoongateUser> {
     const resetTimestampDate = new Date(user.resetTimestamp);
 
     const difference = await subtractDates(resetTimestampDate);
@@ -79,7 +129,7 @@ export class UserManagementService extends MyUserService {
    * Ensures reset key is only valid for a day
    * @param user
    */
-  async validateResetKeyLifeSpan(user: User): Promise<User> {
+  async validateResetKeyLifeSpan(user: MoongateUser): Promise<MoongateUser> {
     const resetKeyLifeSpan = new Date(user.resetKeyTimestamp);
     const difference = await subtractDates(resetKeyLifeSpan);
 
