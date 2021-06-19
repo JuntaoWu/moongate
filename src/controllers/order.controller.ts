@@ -358,6 +358,15 @@ export class OrderController {
       }
     }
 
+    if (selectOrder.status === OrderStatus.DELETED) {
+      return {
+        "data": {},
+        "status": Status.FAILED.toString(),
+        "errorCode": "400",
+        "errorMessage": "current order already deleted"
+      }
+    }
+
     /**set the order status is deleted */
     await this.orderRepository.updateById(id, {status: OrderStatus.DELETED, updateDate: new Date()});
 

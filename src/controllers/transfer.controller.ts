@@ -7,6 +7,7 @@ import {
   Where
 } from '@loopback/repository';
 import {
+  del,
   get, HttpErrors, param, post, requestBody,
   response, Response, RestBindings,
   SchemaObject
@@ -317,13 +318,125 @@ export class TransferController {
   //   await this.transferRepository.replaceById(id, transfer);
   // }
 
-  // @del('/transfer/{id}')
-  // @response(204, {
-  //   description: 'Transfer DELETE success',
-  // })
-  // async deleteById(@param.path.string('id') id: string): Promise<void> {
-  //   await this.transferRepository.deleteById(id);
-  // }
+  @authenticate('jwt')
+  @del('/transfer/{id}')
+  @response(204, {
+    description: 'Transfer DELETE success',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          title: 'ForgotPasswordResponse',
+          properties: {
+            "data": {type: 'object'},
+            "status": {type: 'string'},
+            "errorCode": {type: 'number'},
+            "errorMessage": {type: 'string'}
+          },
+        }
+      }
+    }
+  })
+  async deleteById(@param.path.string('id') id: string): Promise<any> {
+    const selectTransfer = await this.transferRepository.findById(id);
+    if (!selectTransfer) {
+      return {
+        "data": {},
+        "status": Status.FAILED.toString(),
+        "errorCode": "400",
+        "errorMessage": "current transfer isn't exist"
+      }
+    }
+
+    if (selectTransfer.status === TransferStatus.DELETED) {
+      return {
+        "data": {},
+        "status": Status.FAILED.toString(),
+        "errorCode": "400",
+        "errorMessage": "current transfer already deleted"
+      }
+    }
+
+    const senderUser = await this.userRepository.findOne({where: {username: selectTransfer.sender}});
+    const receiverUser = await this.userRepository.findOne({where: {username: selectTransfer.receiver}});
+
+    if (!senderUser) {
+      return {
+        "data": {},
+        "status": Status.FAILED.toString(),
+        "errorCode": "400",
+        "errorMessage": "the sender user of current transfer isn't exist"
+      }
+    }
+
+    if (!receiverUser) {
+      return {
+        "data": {},
+        "status": Status.FAILED.toString(),
+        "errorCode": "400",
+        "errorMessage": "the receiver user of current transfer isn't exist"
+      }
+    }
+
+    const senderInvestment = await this.investmentRepository.findOne({where: {userId: senderUser.id}});
+    const receiverInvestment = await this.investmentRepository.findOne({where: {userId: receiverUser.id}});
+
+    if (!senderInvestment) {
+      return {
+        "data": {},
+        "status": Status.FAILED.toString(),
+        "errorCode": "400",
+        "errorMessage": "the sender user invsetment of current transfer isn't exist"
+      }
+    }
+
+    if (!receiverInvestment) {
+      return {
+        "data": {},
+        "status": Status.FAILED.toString(),
+        "errorCode": "400",
+        "errorMessage": "the receiver user invsetment of current transfer isn't exist"
+      }
+    }
+
+    let currentPurchasedTotal = undefined;
+    let currentLockedTotal = undefined
+    let transferAmount = parseFloat(selectTransfer.amount.toString());
+
+    /**update sender investment */
+    currentPurchasedTotal = parseFloat(senderInvestment.purchasedTotal.toString()) + transferAmount;
+    currentLockedTotal = parseFloat(senderInvestment.lockedTotal.toString()) + transferAmount;
+    await this.investmentRepository.updateById(senderInvestment.id, {
+      purchasedTotal: currentPurchasedTotal,
+      lockedTotal: currentLockedTotal
+    })
+
+    /**update receiver investment */
+    currentPurchasedTotal = parseFloat(receiverInvestment.purchasedTotal.toString()) - transferAmount;
+    currentLockedTotal = parseFloat(receiverInvestment.lockedTotal.toString()) - transferAmount;
+    await this.investmentRepository.updateById(receiverInvestment.id, {
+      purchasedTotal: currentPurchasedTotal,
+      lockedTotal: currentLockedTotal
+    });
+
+    /**set transaction history of current transfer status to Delete */
+    const transactionHistories = await this.transactionHistoryRepository.find({where: {transferId: id}});
+    if (transactionHistories) {
+      const transactionHistoryIds = transactionHistories.map((item) => {return item.id});
+      await this.transactionHistoryRepository.updateAll({status: TransactionStatus.DELETED}, {id: {inq: transactionHistoryIds}});
+    }
+
+    /**set the transfer status to Delete */
+    await this.transferRepository.updateById(id, {status: TransferStatus.DELETED, updateDate: new Date()});
+
+    return {
+      "data": {},
+      "status": Status.SUCCESS.toString(),
+      "errorCode": "",
+      "errorMessage": ""
+    }
+
+  }
 
 
   @get('/acitveTransfer', {
@@ -653,7 +766,7 @@ export class TransferController {
       let currentLockedTotal = undefined
       let transactionHistoryModel = undefined;
 
-      /**update current user investment */
+      /**update sender user investment */
       const senderInvestment = await this.investmentRepository.findOne({where: {userId: senderUser.id}});
       if (senderInvestment) {
         originalPurchasedTotal = senderInvestment.purchasedTotal.toString();
@@ -710,6 +823,26 @@ export class TransferController {
         "errorMessage": ""
       }
     }
+  }
+
+  @authenticate('jwt')
+  @get('/transfer/count/admin')
+  @response(200, {
+    description: 'Transfer model count',
+    content: {'application/json': {schema: CountSchema}},
+  })
+  async countByAdmin(
+    @inject(SecurityBindings.USER)
+    currentUserProfile: UserProfile,
+    @param.where(Transfer) where?: Where<Transfer>,
+  ): Promise<any> {
+    const count = await this.transferRepository.count(where);
+    return {
+      "data": count,
+      "status": Status.SUCCESS.toString(),
+      "errorCode": "",
+      "errorMessage": ""
+    };
   }
 
   @authenticate('jwt')
