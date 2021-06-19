@@ -68,6 +68,9 @@ export class MoongateUserRepository extends DefaultCrudRepository<
           await this.counterRepository.save(counter);
         }
         ctx.instance.username = `User${counter.value.toString().padStart(this.userSerialNumberLength, this.userSerialNumberPadding)}`
+        ctx.instance.createdAt = new Date();
+      } else {
+        ctx.instance.updatedAt = new Date();
       }
     });
     return modelClass;

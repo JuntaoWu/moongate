@@ -2,8 +2,7 @@ import {authenticate} from '@loopback/authentication';
 import {inject} from '@loopback/core';
 import {
   CountSchema,
-  Filter, repository,
-  Where
+  Filter, repository
 } from '@loopback/repository';
 import {
   get,
@@ -55,9 +54,8 @@ export class TransactionHistoryController {
   async count(
     @inject(SecurityBindings.USER)
     currentUserProfile: UserProfile,
-    @param.where(TransactionHistory) where?: Where<TransactionHistory>,
   ): Promise<any> {
-    const count = await this.transactionHistoryRepository.count({...where, userId: currentUserProfile[securityId]});
+    const count = await this.transactionHistoryRepository.count({userId: currentUserProfile[securityId]});
     return {
       "data": count,
       "status": Status.SUCCESS.toString(),
@@ -87,7 +85,9 @@ export class TransactionHistoryController {
   async find(
     @inject(SecurityBindings.USER)
     currentUserProfile: UserProfile,
-    @param.filter(TransactionHistory) filter?: Filter<TransactionHistory>,
+    @param.filter(TransactionHistory, {
+      exclude: ['include', 'where', 'offset', 'fields']
+    }) filter?: Filter<TransactionHistory>,
   ): Promise<any> {
     const result = (await this.transactionHistoryRepository
       .find({

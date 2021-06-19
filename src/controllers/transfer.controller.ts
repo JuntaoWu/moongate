@@ -204,7 +204,9 @@ export class TransferController {
   async find(
     @inject(SecurityBindings.USER)
     currentUserProfile: UserProfile,
-    @param.filter(Transfer) filter?: Filter<Transfer>,
+    @param.filter(Transfer, {
+      exclude: ['include', 'where', 'offset', 'fields']
+    }) filter?: Filter<Transfer>,
   ): Promise<any> {
     const result = (await this.transferRepository
       .find({

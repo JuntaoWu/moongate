@@ -5,13 +5,11 @@
 
 import {authenticate, TokenService} from '@loopback/authentication';
 import {
-  Credentials, TokenServiceBindings,
-  User,
-  UserRepository,
+  Credentials, TokenServiceBindings, UserRepository,
   UserServiceBindings
 } from '@loopback/authentication-jwt';
 import {inject} from '@loopback/core';
-import {hasMany, hasOne, model, property, repository} from '@loopback/repository';
+import {model, property, repository} from '@loopback/repository';
 import {
   get, HttpErrors, param, post,
   requestBody, Response, RestBindings,
@@ -23,23 +21,17 @@ import _ from 'lodash';
 import {INotification, MessageType, NotificationBindings} from 'loopback4-notifications';
 import {v4 as uuidv4} from 'uuid';
 import {Status} from '../constant';
-import {Investment, Notification, TransactionHistory} from '../models';
+import {Investment, MoongateUser, Notification} from '../models';
 import {InvestmentRepository} from '../repositories';
 import {UserManagementService} from '../services/user-management.service';
 
 @model()
-export class NewUserRequest extends User {
+export class NewUserRequest extends MoongateUser {
   @property({
     type: 'string',
     required: true,
   })
   password: string;
-
-  @hasMany(() => TransactionHistory)
-  transactionHistories: TransactionHistory[];
-
-  @hasOne(() => Investment)
-  investment: Investment;
 }
 
 const CredentialsSchema: SchemaObject = {
@@ -54,6 +46,9 @@ const CredentialsSchema: SchemaObject = {
       type: 'string',
       minLength: 6,
     },
+    walletAddress: {
+      type: 'string',
+    }
   },
 };
 
@@ -207,7 +202,7 @@ export class UserController {
     newUserRequest.verificationToken = uuidv4();
     const password = await hash(newUserRequest.password, await genSalt());
     const savedUser = await this.userRepository.create(
-      _.pick(newUserRequest, 'email', 'emailVerified', 'verificationToken'),
+      _.pick(newUserRequest, 'email', 'emailVerified', 'verificationToken', 'walletAddress'),
     );
 
     await this.userRepository.userCredentials(savedUser.id).create({password});
