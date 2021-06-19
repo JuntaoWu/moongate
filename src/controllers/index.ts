@@ -4,3 +4,4 @@ export * from './transaction-history.controller';
 export * from './transfer.controller';
 
 
+export * from './order.controller';

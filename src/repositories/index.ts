@@ -4,3 +4,4 @@ export * from './moongate-user.repository';
 export * from './transaction-history.repository';
 export * from './transfer.repository';
 
+export * from './order.repository';

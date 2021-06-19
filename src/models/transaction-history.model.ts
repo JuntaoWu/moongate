@@ -32,6 +32,16 @@ export class TransactionHistory extends Entity {
   @belongsTo(() => User)
   userId: string;
 
+  @property({
+    type: 'string'
+  })
+  orderId: string;
+
+  @property({
+    type: 'string'
+  })
+  status: string;
+
   constructor(data?: Partial<TransactionHistory>) {
     super(data);
   }

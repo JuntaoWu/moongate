@@ -16,3 +16,18 @@ export const TransactionActivey = {
   RELEASE: 'RELEASE',
   TRNASFER: 'TRNASFER'
 }
+
+export const TransactionStatus = {
+  ACTIVE: 'ACTIVE',
+  DELETED: 'DELETED'
+}
+
+export const OrderStatus = {
+  ACTIVE: 'ACTIVE',
+  DELETED: 'DELETED'
+}
+
+export const OrderType = {
+  PURCHASE: 'PURCHASE',
+  RELEASE: 'RELEASE',
+}
