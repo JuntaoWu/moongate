@@ -22,6 +22,7 @@ export class UserManagementService implements UserService<MoongateUser, Credenti
       name: user.username,
       id: user.id,
       email: user.email,
+      roles: user.roles
     };
   }
 
@@ -66,10 +67,14 @@ export class UserManagementService implements UserService<MoongateUser, Credenti
     }
 
     if (!foundUser.emailVerified) {
-      throw new HttpErrors.Unauthorized(`customer isn't exist or isn't active, please contact admin`);
-    } else {
-      return foundUser;
+      throw new HttpErrors.Unauthorized(`The user you entered does not exist or not activated, please contact admin`);
     }
+
+    if (foundUser.locked) {
+      throw new HttpErrors.Forbidden(`The user has been locked temporarily, please contact admin`);
+    }
+
+    return foundUser;
   }
 
   async requestPasswordReset(email: string): Promise<MoongateUser> {

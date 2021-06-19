@@ -2,8 +2,13 @@ import {AuthenticationComponent} from '@loopback/authentication';
 import {
   JWTAuthenticationComponent,
 
+  TokenServiceBindings,
+
+  TokenServiceConstants,
+
   UserServiceBindings
 } from '@loopback/authentication-jwt';
+import {AuthorizationBindings, AuthorizationComponent, AuthorizationDecision, AuthorizationOptions} from '@loopback/authorization';
 import {BootMixin} from '@loopback/boot';
 import {ApplicationConfig} from '@loopback/core';
 import {RepositoryMixin} from '@loopback/repository';
@@ -21,6 +26,8 @@ import {
   SesProvider
 } from 'loopback4-notifications';
 import path from 'path';
+import {CasbinAuthorizationComponent} from './authorize/casbin-authorization-component';
+import {JWTService} from './authorize/jwt.service';
 import {DbDataSource} from './datasources';
 import {MoongateUserRepository} from './repositories';
 import {MySequence} from './sequence';
@@ -60,10 +67,28 @@ export class MoongateApplication extends BootMixin(
     // ------ ADD SNIPPET AT THE BOTTOM ---------
     // Mount authentication system
     this.component(AuthenticationComponent);
-    // Mount jwt component
+    // Mount jwt component included custom jwt service for basic roles authorization.
     this.component(JWTAuthenticationComponent);
+    this.bind(TokenServiceBindings.TOKEN_SECRET).to(
+      TokenServiceConstants.TOKEN_SECRET_VALUE,
+    );
+    this.bind(TokenServiceBindings.TOKEN_EXPIRES_IN).to(
+      TokenServiceConstants.TOKEN_EXPIRES_IN_VALUE,
+    );
+    this.bind(TokenServiceBindings.TOKEN_SERVICE).toClass(JWTService);
+
     // loopback/notifications.
     this.component(NotificationsComponent);
+    // Authorization
+    const authorizationOptions: AuthorizationOptions = {
+      precedence: AuthorizationDecision.DENY,
+      defaultDecision: AuthorizationDecision.DENY,
+    };
+    this.configure(AuthorizationBindings.COMPONENT).to(authorizationOptions);
+    this.component(AuthorizationComponent);
+    // my custom authorizationComponent
+    this.component(CasbinAuthorizationComponent);
+
     // Bind datasource
     this.dataSource(DbDataSource, UserServiceBindings.DATASOURCE_NAME);
     // ------------- END OF SNIPPET -------------

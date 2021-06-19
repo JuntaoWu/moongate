@@ -1,5 +1,5 @@
 import {TokenService} from '@loopback/authentication';
-import {MyUserService, TokenServiceBindings, User, UserRepository, UserServiceBindings} from '@loopback/authentication-jwt';
+import {TokenServiceBindings, UserServiceBindings} from '@loopback/authentication-jwt';
 import {inject} from '@loopback/core';
 import {repository} from '@loopback/repository';
 import {HttpErrors, post, requestBody, response, ResponseObject, SchemaObject} from '@loopback/rest';
@@ -8,7 +8,8 @@ import {genSalt, hash} from 'bcryptjs';
 import _ from 'lodash';
 import {INotification, MessageType, NotificationBindings} from 'loopback4-notifications';
 import {Status} from '../constant';
-import {Notification, ResetPassword} from '../models';
+import {MoongateUser, Notification, ResetPassword} from '../models';
+import {MoongateUserRepository} from '../repositories';
 import {UserManagementService} from '../services/user-management.service';
 
 
@@ -81,10 +82,10 @@ export class ResetPasswordController {
     @inject(TokenServiceBindings.TOKEN_SERVICE)
     public jwtService: TokenService,
     @inject(UserServiceBindings.USER_SERVICE)
-    public userService: MyUserService,
+    public userService: UserManagementService,
     @inject(SecurityBindings.USER, {optional: true})
     public user: UserProfile,
-    @repository(UserRepository) protected userRepository: UserRepository,
+    @repository(MoongateUserRepository) protected userRepository: MoongateUserRepository,
     @inject(UserServiceBindings.USER_SERVICE)
     public userManagementService: UserManagementService,
     @inject(NotificationBindings.NotificationProvider)
@@ -99,7 +100,7 @@ export class ResetPasswordController {
         content: {
           'application/json': {
             schema: {
-              'x-ts-type': User,
+              'x-ts-type': MoongateUser,
             },
           },
         },
@@ -107,8 +108,8 @@ export class ResetPasswordController {
     },
   })
   async resendVerificationEmail(
-    @requestBody(ForgotPasswordRequestBody) newUserRequest: User,
-  ): Promise<User> {
+    @requestBody(ForgotPasswordRequestBody) newUserRequest: MoongateUser,
+  ): Promise<MoongateUser> {
     const user = await this.userRepository.findOne({where: {email: newUserRequest.email}});
     if (!user) {
       throw new HttpErrors.NotFound("Please make sure your email is correct.");
@@ -138,7 +139,7 @@ export class ResetPasswordController {
   @post('/forgotPassword')
   @response(200, ForgotPasswordResponse)
   async forgot(
-    @requestBody(ForgotPasswordRequestBody) forgotPasswordRequest: User,
+    @requestBody(ForgotPasswordRequestBody) forgotPasswordRequest: MoongateUser,
   ): Promise<object> {
 
     const {email} = forgotPasswordRequest;
