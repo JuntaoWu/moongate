@@ -188,7 +188,7 @@ export class ManagementUserController {
       await this.moongateUserRepository.userCredentials(id).create({password});
     }
 
-    await this.moongateUserRepository.updateById(id, moongateUser);
+    await this.moongateUserRepository.updateById(id, _.omit(moongateUser, 'roles'));
   }
 
   // @del('/management-user/{id}')

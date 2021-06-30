@@ -16,13 +16,15 @@ import {
   SchemaObject
 } from '@loopback/rest';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
+import {MailDataRequired} from '@sendgrid/mail';
 import {genSalt, hash} from 'bcryptjs';
 import _ from 'lodash';
-import {INotification, MessageType, NotificationBindings} from 'loopback4-notifications';
+import {INotification, NotificationBindings} from 'loopback4-notifications';
 import {v4 as uuidv4} from 'uuid';
 import {Status} from '../constant';
-import {Investment, MoongateUser, Notification} from '../models';
+import {Investment, MoongateUser} from '../models';
 import {InvestmentRepository} from '../repositories';
+import {SendGridBindings, SendgridService} from '../services';
 import {UserManagementService} from '../services/user-management.service';
 
 @model()
@@ -74,6 +76,8 @@ export class UserController {
     @inject(NotificationBindings.NotificationProvider)
     private readonly notifProvider: INotification,
     @repository(InvestmentRepository) protected investmentRepository: InvestmentRepository,
+    @inject(SendGridBindings.SEND_GRID_SERVICE)
+    private sendGridService: SendgridService,
   ) { }
 
   @post('/users/login', {
@@ -207,9 +211,27 @@ export class UserController {
 
     await this.userRepository.userCredentials(savedUser.id).create({password});
 
-    const message: Notification = new Notification({
+    // const message: Notification = new Notification({
+    //   subject: "Activate User",
+    //   body: `<div>
+    //       <p>Hi, ${savedUser.username}</p>
+    //       <p>Weclome to Moongate!</p>
+    //       <p>Please take a second to confirm ${savedUser.email} as your email address</p>
+    //       <p><a href="${process.env.API_URL}/acitveUser?token=${savedUser.verificationToken}">Activations Link</a></p>
+    //       <p>Once you do, you'll be able to opt-in to notifactions of activity and access other features that require a valid email address.</p>
+    //       <p>Best Regards,</p>
+    //       <p>Team Moongate</p>
+    //   </div>`,
+    //   receiver: {"to": [{"id": savedUser.email}]},
+    //   sentDate: new Date(),
+    //   type: MessageType.Email,
+    // });
+
+    // await this.notifProvider.publish(message);
+
+    const message: MailDataRequired = {
       subject: "Activate User",
-      body: `<div>
+      html: `<div>
           <p>Hi, ${savedUser.username}</p>
           <p>Weclome to Moongate!</p>
           <p>Please take a second to confirm ${savedUser.email} as your email address</p>
@@ -218,12 +240,11 @@ export class UserController {
           <p>Best Regards,</p>
           <p>Team Moongate</p>
       </div>`,
-      receiver: {"to": [{"id": savedUser.email}]},
-      sentDate: new Date(),
-      type: MessageType.Email,
-    });
+      to: {email: savedUser.email},
+      from: 'support@moongate.investments',
+    };
 
-    await this.notifProvider.publish(message);
+    await this.sendGridService.send(message);
 
     return {
       "data": savedUser,

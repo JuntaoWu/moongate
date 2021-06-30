@@ -18,6 +18,7 @@ import {
   RestExplorerComponent
 } from '@loopback/rest-explorer';
 import {ServiceMixin} from '@loopback/service-proxy';
+import {MailService} from '@sendgrid/mail';
 import {
   NotificationBindings, NotificationsComponent,
 
@@ -31,7 +32,7 @@ import {JWTService} from './authorize/jwt.service';
 import {DbDataSource} from './datasources';
 import {MoongateUserRepository} from './repositories';
 import {MySequence} from './sequence';
-import {UserManagementService} from './services';
+import {SendGridBindings, SendgridService, UserManagementService} from './services';
 
 export {ApplicationConfig};
 
@@ -111,5 +112,11 @@ export class MoongateApplication extends BootMixin(
       region: process.env.SES_REGION,
     });
     this.bind(NotificationBindings.EmailProvider).toProvider(SesProvider);
+    this.bind(SendGridBindings.SEND_GRID_SERVICE).toClass(
+      SendgridService
+    );
+    this.bind(MailService.name).toClass(
+      MailService
+    );
   }
 }
