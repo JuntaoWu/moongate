@@ -481,6 +481,14 @@ export class TransferController {
           "errorMessage": "current transfer alreay completed,can't transfer again"
         }
       }
+      else if (transfer && transfer.status === TransferStatus.CANCELLED) {
+        return {
+          "data": {},
+          "status": Status.FAILED.toString(),
+          "errorCode": "400",
+          "errorMessage": "current transfer alreay cancel ,can't transfer again"
+        }
+      }
       else {
         let originalPurchasedTotal = undefined;
         let currentPurchasedTotal = undefined;
