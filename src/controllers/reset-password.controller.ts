@@ -4,12 +4,14 @@ import {inject} from '@loopback/core';
 import {repository} from '@loopback/repository';
 import {HttpErrors, post, requestBody, response, ResponseObject, SchemaObject} from '@loopback/rest';
 import {SecurityBindings, UserProfile} from '@loopback/security';
+import {MailDataRequired} from '@sendgrid/mail';
 import {genSalt, hash} from 'bcryptjs';
 import _ from 'lodash';
-import {INotification, MessageType, NotificationBindings} from 'loopback4-notifications';
+import {INotification, NotificationBindings} from 'loopback4-notifications';
 import {Status} from '../constant';
-import {MoongateUser, Notification, ResetPassword} from '../models';
+import {MoongateUser, ResetPassword} from '../models';
 import {MoongateUserRepository} from '../repositories';
+import {SendGridBindings, SendgridService} from '../services';
 import {UserManagementService} from '../services/user-management.service';
 
 
@@ -90,6 +92,8 @@ export class ResetPasswordController {
     public userManagementService: UserManagementService,
     @inject(NotificationBindings.NotificationProvider)
     private readonly notifProvider: INotification,
+    @inject(SendGridBindings.SEND_GRID_SERVICE)
+    private sendGridService: SendgridService,
   ) { }
 
 
@@ -115,7 +119,7 @@ export class ResetPasswordController {
       throw new HttpErrors.NotFound("Please make sure your email is correct.");
     }
 
-    const message: Notification = new Notification({
+    /*const message: Notification = ({
       subject: "Activate User",
       body: `<div>
           <p>Hi, ${user.username}</p>
@@ -131,7 +135,23 @@ export class ResetPasswordController {
       type: MessageType.Email,
     });
 
-    await this.notifProvider.publish(message);
+    await this.notifProvider.publish(message);*/
+
+    const message: MailDataRequired = {
+      subject: "Activate User",
+      html: `<div>
+          <p>Hi, ${user.username}</p>
+          <p>Weclome to Moongate!</p>
+          <p>Please take a second to confirm ${user.email} as your email address</p>
+          <p><a href="${process.env.API_URL}/acitveUser?token=${user.verificationToken}">Activations Link</a></p>
+          <p>Once you do, you'll be able to opt-in to notifactions of activity and access other features that require a valid email address.</p>
+          <p>Best Regards,</p>
+          <p>Team Moongate</p>
+      </div>`,
+      to: {email: user.email},
+      from: 'support@moongate.investments',
+    };
+    await this.sendGridService.send(message);
 
     return user;
   }
@@ -154,7 +174,7 @@ export class ResetPasswordController {
       };
     }
 
-    const message: Notification = new Notification({
+    /*const message: Notification = new Notification({
       subject: "重置密码",
       body: `<div>
           <p>Hello, ${user.username}</p>
@@ -170,7 +190,23 @@ export class ResetPasswordController {
       type: MessageType.Email,
     });
 
-    await this.notifProvider.publish(message);
+    await this.notifProvider.publish(message);*/
+
+    const message: MailDataRequired = {
+      subject: "Reset Password",
+      html: `<div>
+        <p>Hello, ${user.username}</p>
+        <p style="color: red;">We received a request to reset the password for your account with email address: ${user.email}</p>
+        <p>To reset your password click on the link provided below</p>
+        <a href="${process.env.APPLICATION_URL}${process.env.PATH_RESET_PASSWORD}?token=${user.resetKey}">Reset your password link</a>
+        <p>If you didn’t request to reset your password, please ignore this email or reset your password to protect your account.</p>
+        <p>Thanks</p>
+        <p>LoopBack'ers at Shoppy</p>
+      </div>`,
+      to: {email: user.email},
+      from: 'support@moongate.investments',
+    };
+    await this.sendGridService.send(message);
 
     return {
       "data": `一封邮件已发送到您的邮箱${user.email}`,

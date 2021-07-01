@@ -14,11 +14,13 @@ import {
   SchemaObject
 } from '@loopback/rest';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
-import {INotification, MessageType, NotificationBindings} from 'loopback4-notifications';
+import {MailDataRequired} from '@sendgrid/mail';
+import {INotification, NotificationBindings} from 'loopback4-notifications';
 import moment from 'moment';
 import {Status, TransactionActivey, TransactionStatus, TransferStatus} from '../constant';
-import {Notification, TransactionHistory, Transfer, TransferRequest} from '../models';
+import {TransactionHistory, Transfer, TransferRequest} from '../models';
 import {InvestmentRepository, TransactionHistoryRepository, TransferRepository} from '../repositories';
+import {SendGridBindings, SendgridService} from '../services';
 
 const CreateTransferSchema: SchemaObject = {
   type: 'object',
@@ -87,7 +89,9 @@ export class TransferController {
     @repository(InvestmentRepository)
     public investmentRepository: InvestmentRepository,
     @repository(TransactionHistoryRepository)
-    public transactionHistoryRepository: TransactionHistoryRepository
+    public transactionHistoryRepository: TransactionHistoryRepository,
+    @inject(SendGridBindings.SEND_GRID_SERVICE)
+    private sendGridService: SendgridService
   ) { }
 
   @authenticate('jwt')
@@ -168,7 +172,7 @@ export class TransferController {
       transfer.createDate = new Date();
       transfer.status = TransferStatus.PENDING;
       const result = await this.transferRepository.create(transfer);
-      const message: Notification = new Notification({
+      /*const message: Notification = new Notification({
         subject: "Activate Transfer",
         body: `<div>
             <p>Hi, ${currentUser.username}</p>
@@ -185,7 +189,24 @@ export class TransferController {
         sentDate: new Date(),
         type: MessageType.Email,
       });
-      await this.notifProvider.publish(message);
+      await this.notifProvider.publish(message);*/
+      const message: MailDataRequired = {
+        subject: "Activate Transfer",
+        html: `<div>
+          <p>Hi, ${currentUser.username}</p>
+          <p>Confirmation of transfer application</p>
+          <p>Your Moongate account applies to transfer ${transferRequset.amount} to</p>
+          <p>${targetUser.username}</p>
+          <p>Please verify the recipient's user ID verbatim. If you did make this request, please confirm the transfer:</p>
+          <p><a href="${process.env.API_URL}/acitveTransfer?transferId=${result.id}">Activations Link</a></p>
+          <p>If it is not your own operation, simply ignore this email.</p>
+          <p>Best Regards,</p>
+          <p>Team Moongate</p>
+        </div>`,
+        to: {email: currentUser.email},
+        from: 'support@moongate.investments',
+      };
+      await this.sendGridService.send(message);
       return {
         "data": result,
         "status": Status.SUCCESS.toString(),
@@ -563,7 +584,7 @@ export class TransferController {
         /**send email */
         if (currentUser && targetUser) {
           const currentDateTime = moment().format("YYYY-MM-DD HH:mm:ss")
-          const message: Notification = new Notification({
+          /*const message: Notification = new Notification({
             subject: "Transfer successfully",
             body: `<div>
                 <p>Hi, ${currentUser.username}</p>
@@ -578,7 +599,21 @@ export class TransferController {
             type: MessageType.Email,
           });
 
-          await this.notifProvider.publish(message);
+          await this.notifProvider.publish(message);*/
+          const message: MailDataRequired = {
+            subject: "Transfer successfully",
+            html: `<div>
+              <p>Hi, ${currentUser.username}</p>
+              <p>Transfer successfully</p>
+              <p>Your Moongate account has successfully transferred ${transfer?.amount} T on ${currentDateTime}. The recipient's user ID is ${targetUser.username}</p>
+              <p>This is a system email, please do not reply.</p>
+              <p>Best Regards,</p>
+              <p>Team Moongate</p>
+            </div>`,
+            to: {email: currentUser.email},
+            from: 'support@moongate.investments',
+          };
+          await this.sendGridService.send(message);
         }
 
         return res.redirect(`${process.env.APPLICATION_URL}${process.env.PATH_TRANSFER}` as string);
@@ -642,7 +677,7 @@ export class TransferController {
 
         /**send email */
         if (currentUser && targetUser) {
-          const message: Notification = new Notification({
+          /*const message: Notification = new Notification({
             subject: "Transfer cancelled",
             body: `<div>
                 <p>Hi, ${currentUser.username}</p>
@@ -657,7 +692,21 @@ export class TransferController {
             type: MessageType.Email,
           });
 
-          await this.notifProvider.publish(message);
+          await this.notifProvider.publish(message);*/
+          const message: MailDataRequired = {
+            subject: "Transfer cancelled",
+            html: `<div>
+                <p>Hi, ${currentUser.username}</p>
+                <p>Transfer cancelled</p>
+                <p>Your transfer to the user ${targetUser.username} has been successfully cancelled.</p>
+                <p>This is a system email, please do not reply.</p>
+                <p>Best Regards,</p>
+                <p>Team Moongate</p>
+            </div>`,
+            to: {email: currentUser.email},
+            from: 'support@moongate.investments',
+          };
+          await this.sendGridService.send(message);
         }
 
         return {
