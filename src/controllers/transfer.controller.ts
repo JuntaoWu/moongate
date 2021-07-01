@@ -133,6 +133,14 @@ export class TransferController {
         "errorMessage": "current user don't have any investment record"
       }
     }
+    if (transferRequset.amount <= 0) {
+      return {
+        "data": {},
+        "status": Status.FAILED.toString(),
+        "errorCode": "400",
+        "errorMessage": "transfer amount don't less than 0"
+      }
+    }
     if ((parseFloat(availableAmount) - transferRequset.amount) < 0) {
       return {
         "data": {},
@@ -747,6 +755,15 @@ export class TransferController {
     currentUserProfile: UserProfile,
     @requestBody(AdminCreateTransferRequestBody) transferRequset: TransferRequest,
   ): Promise<any> {
+
+    if (transferRequset.amount <= 0) {
+      return {
+        "data": {},
+        "status": Status.FAILED.toString(),
+        "errorCode": "400",
+        "errorMessage": "transfer amount don't less than 0"
+      }
+    }
 
     const senderUser = await this.userRepository.findOne({where: {username: transferRequset.sender}})
     if (!senderUser) {
