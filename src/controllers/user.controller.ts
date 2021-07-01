@@ -241,7 +241,7 @@ export class UserController {
           <p>Team Moongate</p>
       </div>`,
       to: {email: savedUser.email},
-      from: 'support@moongate.investments',
+      from: process.env.SEND_FROM as string,
     };
 
     await this.sendGridService.send(message);

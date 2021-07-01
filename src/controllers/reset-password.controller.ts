@@ -149,7 +149,7 @@ export class ResetPasswordController {
           <p>Team Moongate</p>
       </div>`,
       to: {email: user.email},
-      from: 'support@moongate.investments',
+      from: process.env.SEND_FROM as string,
     };
     await this.sendGridService.send(message);
 
@@ -204,7 +204,7 @@ export class ResetPasswordController {
         <p>LoopBack'ers at Shoppy</p>
       </div>`,
       to: {email: user.email},
-      from: 'support@moongate.investments',
+      from: process.env.SEND_FROM as string,
     };
     await this.sendGridService.send(message);
 
