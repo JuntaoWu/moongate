@@ -123,7 +123,14 @@ export class TransferController {
         where: {userId: currentUserProfile[securityId]}
       })
 
-    const availableAmount = investmentResult && investmentResult.lockedTotal && investmentResult.lockedTotal.toString();
+    let availableAmount = investmentResult && investmentResult.lockedTotal && parseFloat(investmentResult.lockedTotal.toString());
+    const pendingTransfers = await this.transferRepository.find({where: {userId: currentUserProfile[securityId], status: TransferStatus.PENDING}});
+    let pendingAmount = 0;
+    pendingTransfers && pendingTransfers.map((item) => {
+      pendingAmount = pendingAmount + parseFloat(item.amount.toString());
+    });
+
+
 
     if (!investmentResult || !availableAmount) {
       return {
@@ -141,7 +148,8 @@ export class TransferController {
         "errorMessage": "transfer amount don't less than 0"
       }
     }
-    if ((parseFloat(availableAmount) - transferRequset.amount) < 0) {
+    availableAmount = availableAmount - pendingAmount;
+    if ((availableAmount - transferRequset.amount) < 0) {
       return {
         "data": {},
         "status": Status.FAILED.toString(),

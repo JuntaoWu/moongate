@@ -5,8 +5,8 @@ import {inject} from '@loopback/core';
 import {repository} from '@loopback/repository';
 import {get, response} from '@loopback/rest';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
-import {Status} from '../constant';
-import {InvestmentRepository} from '../repositories';
+import {Status, TransferStatus} from '../constant';
+import {InvestmentRepository, TransferRepository} from '../repositories';
 
 // import {inject} from '@loopback/core';
 
@@ -14,6 +14,8 @@ export class InvestmentController {
   constructor(
     @repository(InvestmentRepository)
     public investmentRepository: InvestmentRepository,
+    @repository(TransferRepository)
+    public transferRepository: TransferRepository,
   ) { }
 
   @authenticate('jwt')
@@ -43,11 +45,16 @@ export class InvestmentController {
         where: {userId: currentUserProfile[securityId]}
       })
     if (investmentResult) {
+      const pendingTransfers = await this.transferRepository.find({where: {userId: currentUserProfile[securityId], status: TransferStatus.PENDING}});
+      let pendingAmount = 0;
+      pendingTransfers && pendingTransfers.map((item) => {
+        pendingAmount = pendingAmount + parseFloat(item.amount.toString());
+      })
       const result = {
         ...investmentResult,
-        purchasedTotal: investmentResult.purchasedTotal.toString(),
-        releasedTotal: investmentResult.releasedTotal.toString(),
-        lockedTotal: investmentResult.lockedTotal.toString()
+        purchasedTotal: parseFloat(investmentResult.purchasedTotal.toString()) - pendingAmount,
+        releasedTotal: parseFloat(investmentResult.releasedTotal.toString()),
+        lockedTotal: parseFloat(investmentResult.lockedTotal.toString()) - pendingAmount
       };
       return {
         "data": result,
