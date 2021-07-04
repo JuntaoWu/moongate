@@ -198,15 +198,16 @@ export class TransferController {
         type: MessageType.Email,
       });
       await this.notifProvider.publish(message);*/
+      const link = `${process.env.API_URL}/acitveTransfer?transferId=${result.id}`;
       const message: MailDataRequired = {
         subject: "Activate Transfer",
         html: `<div>
           <p>Hi, ${currentUser.username}</p>
           <p>Confirmation of transfer application</p>
-          <p>Your Moongate account applies to transfer ${transferRequset.amount} to</p>
+          <p>Your Moongate account applies to transfer ${transferRequset.amount} T to</p>
           <p>${targetUser.username}</p>
           <p>Please verify the recipient's user ID verbatim. If you did make this request, please confirm the transfer:</p>
-          <p><a href="${process.env.API_URL}/acitveTransfer?transferId=${result.id}">Activations Link</a></p>
+          <p><a href="${process.env.API_URL}/acitveTransfer?transferId=${result.id}">${link}</a></p>
           <p>If it is not your own operation, simply ignore this email.</p>
           <p>Best Regards,</p>
           <p>Team Moongate</p>
