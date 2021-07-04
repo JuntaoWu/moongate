@@ -69,6 +69,26 @@ export class MoongateUser extends User {
   })
   roles: string[]
 
+  @property({
+    type: 'number',
+  })
+  resetCount: number;
+
+  @property({
+    type: 'string',
+  })
+  resetTimestamp: string;
+
+  @property({
+    type: 'string',
+  })
+  resetKey: string;
+
+  @property({
+    type: 'string',
+  })
+  resetKeyTimestamp: string;
+
   constructor(data?: Partial<MoongateUser>) {
     super(data);
   }
