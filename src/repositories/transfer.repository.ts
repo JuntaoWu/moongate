@@ -51,6 +51,9 @@ export class TransferRepository extends DefaultCrudRepository<
           await this.counterRepository.save(counter);
         }
         ctx.instance.recordNumber = `Transfer${counter.value.toString().padStart(this.userSerialNumberLength, this.userSerialNumberPadding)}`
+        ctx.instance.createDate = new Date();
+      } else {
+        ctx.data.updateDate = new Date();
       }
     });
     return modelClass;

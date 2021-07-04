@@ -49,6 +49,9 @@ export class OrderRepository extends DefaultCrudRepository<
           await this.counterRepository.save(counter);
         }
         ctx.instance.recordNumber = `Order${counter.value.toString().padStart(this.userSerialNumberLength, this.userSerialNumberPadding)}`
+        ctx.instance.createDate = new Date();
+      } else {
+        ctx.data.updateDate = new Date();
       }
     });
     return modelClass;

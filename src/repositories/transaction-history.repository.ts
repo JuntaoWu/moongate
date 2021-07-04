@@ -27,4 +27,18 @@ export class TransactionHistoryRepository extends DefaultCrudRepository<
     // add this line to register inclusion resolver.
     this.registerInclusionResolver('user', this.user.inclusionResolver);
   }
+
+  definePersistedModel(entityClass: typeof TransactionHistory) {
+    const modelClass = super.definePersistedModel(entityClass);
+    modelClass.observe('before save', async ctx => {
+      console.log(`going to save ${ctx.Model.modelName}`);
+      var app = ctx.Model.dataSource;
+
+      //Apply this hooks for save operation only..
+      if (ctx.isNewInstance) {
+        ctx.instance.date = new Date();
+      }
+    });
+    return modelClass;
+  }
 }
