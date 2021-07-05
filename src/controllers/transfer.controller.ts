@@ -208,10 +208,9 @@ export class TransferController {
       await this.notifProvider.publish(message);*/
       const link = `${process.env.API_URL}/acitveTransfer?transferId=${result.id}`;
       const message: MailDataRequired = {
-        subject: "Activate Transfer",
+        subject: "Confirmation of transfer application",
         html: `<div>
           <p>Hi, ${currentUser.username}</p>
-          <p>Confirmation of transfer application</p>
           <p>Your Moongate account applies to transfer ${transferRequset.amount} T to</p>
           <p>${targetUser.username}</p>
           <p>Please verify the recipient's user ID verbatim. If you did make this request, please confirm the transfer:</p>
@@ -621,7 +620,6 @@ export class TransferController {
             subject: "Transfer successfully",
             html: `<div>
               <p>Hi, ${currentUser.username}</p>
-              <p>Transfer successfully</p>
               <p>Your Moongate account has successfully transferred ${transfer?.amount} T on ${currentDateTime}. The recipient's user ID is ${targetUser.username}</p>
               <p>This is a system email, please do not reply.</p>
               <p>Best Regards,</p>
@@ -714,7 +712,6 @@ export class TransferController {
             subject: "Transfer cancelled",
             html: `<div>
                 <p>Hi, ${currentUser.username}</p>
-                <p>Transfer cancelled</p>
                 <p>Your transfer to the user ${targetUser.username} has been successfully cancelled.</p>
                 <p>This is a system email, please do not reply.</p>
                 <p>Best Regards,</p>

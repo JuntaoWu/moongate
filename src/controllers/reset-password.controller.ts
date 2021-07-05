@@ -138,10 +138,9 @@ export class ResetPasswordController {
     await this.notifProvider.publish(message);*/
     const link = `${process.env.API_URL}/acitveUser?token=${user.verificationToken}`;
     const message: MailDataRequired = {
-      subject: "Activate User",
+      subject: "Welcome to Moongate!",
       html: `<div>
           <p>Hi, ${user.username}</p>
-          <p>Weclome to Moongate!</p>
           <p>Please take a second to confirm ${user.email} as your email address</p>
           <p><a href="${process.env.API_URL}/acitveUser?token=${user.verificationToken}">${link}</a></p>
           <p>Once you do, you'll be able to opt-in to notifactions of activity and access other features that require a valid email address.</p>
@@ -193,7 +192,7 @@ export class ResetPasswordController {
     await this.notifProvider.publish(message);*/
     const link = `${process.env.APPLICATION_URL}${process.env.PATH_RESET_PASSWORD}?token=${user.resetKey}`;
     const message: MailDataRequired = {
-      subject: "Reset Password",
+      subject: "Here are your password reset instructions.",
       html: `<div>
         <p>Hello, ${user.username}</p>
         <p>We received a request to reset the password for your account with email address: ${user.email}</p>
