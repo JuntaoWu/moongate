@@ -2,7 +2,7 @@ import {UserCredentials, UserCredentialsRepository} from '@loopback/authenticati
 import {Getter, inject} from '@loopback/core';
 import {DefaultCrudRepository, HasOneRepositoryFactory, repository} from '@loopback/repository';
 import {DbDataSource} from '../datasources';
-import {Counter, MoongateUser, MoongateUserRelations} from '../models';
+import {MoongateUser, MoongateUserRelations} from '../models';
 import {CounterRepository} from './counter.repository';
 
 export class MoongateUserRepository extends DefaultCrudRepository<
@@ -53,21 +53,14 @@ export class MoongateUserRepository extends DefaultCrudRepository<
     const modelClass = super.definePersistedModel(entityClass);
     modelClass.observe('before save', async ctx => {
       console.log(`going to save ${ctx.Model.modelName}`);
-      var app = ctx.Model.dataSource;
-
       //Apply this hooks for save operation only..
       if (ctx.isNewInstance) {
-        //suppose my datasource name is mongodb
-        let counter = await this.counterRepository.findOne({where: {collection: 'MoongateUser'}});
-        if (counter?.value) {
-          console.log(counter.value);
-          ++counter.value;
-          await this.counterRepository.updateById(counter.getId(), counter);
-        } else {
-          counter = new Counter({value: this.userSerialNumberInitial, collection: 'MoongateUser'});
-          await this.counterRepository.save(counter);
+        let randomUsername = `user${Math.floor(Math.random() * 1000000)}`;
+        while (await this.findOne({where: {username: randomUsername}})) {
+          randomUsername = `user${Math.floor(Math.random() * 1000000)}`;
         }
-        ctx.instance.username = `User${counter.value.toString().padStart(this.userSerialNumberLength, this.userSerialNumberPadding)}`
+
+        ctx.instance.username = randomUsername;
         ctx.instance.createdAt = new Date();
       } else {
         ctx.data.updatedAt = new Date();

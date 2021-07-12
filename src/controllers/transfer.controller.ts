@@ -29,7 +29,7 @@ const CreateTransferSchema: SchemaObject = {
     receiver: {
       type: 'string',
       description: '目标username',
-      example: 'User123456'
+      example: 'user123456'
     },
     amount: {
       type: 'number',
@@ -54,12 +54,12 @@ const AdminCreateTransferSchema: SchemaObject = {
     sender: {
       type: 'string',
       description: '发送username',
-      example: 'User123456'
+      example: 'user123456'
     },
     receiver: {
       type: 'string',
       description: '目标username',
-      example: 'User123456'
+      example: 'user123456'
     },
     amount: {
       type: 'number',

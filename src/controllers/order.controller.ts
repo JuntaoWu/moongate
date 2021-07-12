@@ -23,7 +23,7 @@ const CreateOrderSchema: SchemaObject = {
     username: {
       type: 'string',
       description: '购买Token的username',
-      example: 'User123456'
+      example: 'user123456'
     },
     amount: {
       type: 'number',
