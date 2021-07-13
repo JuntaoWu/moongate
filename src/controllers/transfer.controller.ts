@@ -211,7 +211,7 @@ export class TransferController {
         subject: "Confirmation of transfer application",
         html: `<div>
           <p>Hi, ${currentUser.username}</p>
-          <p>Your Moongate account applies to transfer ${transferRequset.amount} T to</p>
+          <p>Your Moongate account applies to transfer ${transferRequset.amount.toFixed(2)} T to</p>
           <p>${targetUser.username}</p>
           <p>Please verify the recipient's user ID verbatim. If you did make this request, please confirm the transfer:</p>
           <p><a href="${process.env.API_URL}/acitveTransfer?transferId=${result.id}">${link}</a></p>
@@ -620,7 +620,7 @@ export class TransferController {
             subject: "Transfer successfully",
             html: `<div>
               <p>Hi, ${currentUser.username}</p>
-              <p>Your Moongate account has successfully transferred ${transfer?.amount} T on ${currentDateTime}. The recipient's user ID is ${targetUser.username}</p>
+              <p>Your Moongate account has successfully transferred ${transfer?.amount.toFixed(2)} T on ${currentDateTime}. The recipient's user ID is ${targetUser.username}</p>
               <p>This is a system email, please do not reply.</p>
               <p>Best Regards,</p>
               <p>Team Moongate</p>
