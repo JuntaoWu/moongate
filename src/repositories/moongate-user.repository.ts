@@ -55,9 +55,9 @@ export class MoongateUserRepository extends DefaultCrudRepository<
       console.log(`going to save ${ctx.Model.modelName}`);
       //Apply this hooks for save operation only..
       if (ctx.isNewInstance) {
-        let randomUsername = `user${Math.floor(Math.random() * 1000000)}`;
+        let randomUsername = `user${this.getSerialNumber()}`;
         while (await this.findOne({where: {username: randomUsername}})) {
-          randomUsername = `user${Math.floor(Math.random() * 1000000)}`;
+          randomUsername = `user${this.getSerialNumber()}`;
         }
 
         ctx.instance.username = randomUsername;
@@ -67,5 +67,10 @@ export class MoongateUserRepository extends DefaultCrudRepository<
       }
     });
     return modelClass;
+  }
+
+  getSerialNumber() {
+    let randomNumber = `${Math.floor(Math.random() * 1000000)}`.padStart(this.userSerialNumberLength, this.userSerialNumberPadding);
+    return randomNumber;
   }
 }

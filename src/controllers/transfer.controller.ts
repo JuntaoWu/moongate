@@ -620,7 +620,7 @@ export class TransferController {
             subject: "Transfer successfully",
             html: `<div>
               <p>Hi, ${currentUser.username}</p>
-              <p>Your Moongate account has successfully transferred ${transfer?.amount.toFixed(2)} T on ${currentDateTime}. The recipient's user ID is ${targetUser.username}</p>
+              <p>Your Moongate account has successfully transferred ${parseFloat(transferAmount).toFixed(2)} T on ${currentDateTime}. The recipient's user ID is ${targetUser.username}</p>
               <p>This is a system email, please do not reply.</p>
               <p>Best Regards,</p>
               <p>Team Moongate</p>
