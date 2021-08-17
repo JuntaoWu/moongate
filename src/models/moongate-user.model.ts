@@ -49,6 +49,11 @@ export class MoongateUser extends User {
   walletAddress: string;
 
   @property({
+    type: 'string'
+  })
+  network: string;
+
+  @property({
     type: 'boolean'
   })
   locked: boolean;

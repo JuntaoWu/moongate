@@ -48,9 +48,6 @@ const CredentialsSchema: SchemaObject = {
       type: 'string',
       minLength: 6,
     },
-    walletAddress: {
-      type: 'string',
-    }
   },
 };
 
@@ -60,6 +57,27 @@ export const CredentialsRequestBody = {
   content: {
     'application/json': {schema: CredentialsSchema},
   },
+};
+
+const WalletAddressSchema: SchemaObject = {
+  type: 'object',
+  required: ['walletAddress'],
+  properties: {
+    walletAddress: {
+      type: 'string',
+    },
+    network: {
+      type: 'string',
+    }
+  }
+};
+
+export const WalletAddressRequestBody = {
+  description: 'The input of updateWalletAddress function',
+  required: true,
+  content: {
+    'application/json': {schema: WalletAddressSchema},
+  }
 };
 
 export class UserController {
@@ -144,12 +162,71 @@ export class UserController {
     @inject(SecurityBindings.USER)
     currentUserProfile: UserProfile,
   ): Promise<any> {
+    const user = await this.userManagementService.findUserById(currentUserProfile[securityId]);
+
     return {
-      data: {userId: currentUserProfile[securityId], username: currentUserProfile.name},
+      data: {
+        userId: currentUserProfile[securityId],
+        username: currentUserProfile.name,
+        walletAddress: user.walletAddress,
+        network: user.network,
+      },
       status: Status.SUCCESS.toString(),
       errorCode: "",
       errorMessage: ""
     };
+  }
+
+  @authenticate('jwt')
+  @post('/updateWalletAddress', {
+    responses: {
+      '200': {
+        description: 'Return updateWalletAddress status',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                "data": {type: 'object'},
+                "status": {type: 'string'},
+                "errorCode": {type: 'number'},
+                "errorMessage": {type: 'string'}
+              }
+            },
+          },
+        }
+      }
+    }
+  })
+  async updateWalletAddress(
+    @inject(SecurityBindings.USER)
+    currentUserProfile: UserProfile,
+    @requestBody(WalletAddressRequestBody) walletAddressRequest: MoongateUser,
+  ): Promise<any> {
+    const user = await this.userRepository.findById(currentUserProfile[securityId]);
+    if (!user) {
+      throw new HttpErrors.NotFound(`current user not exists`);
+    }
+    if (user.emailVerified) {
+      await this.userRepository.updateById(user.id, {
+        walletAddress: walletAddressRequest.walletAddress,
+        network: walletAddressRequest.network,
+      });
+      return {
+        data: "",
+        status: Status.SUCCESS.toString(),
+        errorCode: "",
+        errorMessage: ""
+      }
+    }
+    else {
+      return {
+        data: "",
+        status: Status.FAILED.toString(),
+        errorCode: "403",
+        errorMessage: "current user not activated"
+      };
+    }
   }
 
   @post('/signup', {
@@ -206,7 +283,7 @@ export class UserController {
     newUserRequest.verificationToken = uuidv4();
     const password = await hash(newUserRequest.password, await genSalt());
     const savedUser = await this.userRepository.create(
-      _.pick(newUserRequest, 'email', 'emailVerified', 'verificationToken', 'walletAddress'),
+      _.pick(newUserRequest, 'email', 'emailVerified', 'verificationToken'),
     );
 
     await this.userRepository.userCredentials(savedUser.id).create({password});
@@ -276,7 +353,7 @@ export class UserController {
   ): Promise<any> {
     const user = await this.userRepository.findOne({where: {"verificationToken": token}, });
     if (!user) {
-      throw new HttpErrors.NotFound(`current customer don't exist`);
+      throw new HttpErrors.NotFound(`current user not exists`);
     }
     if (user && user.emailVerified) {
       return res.redirect(`${process.env.APPLICATION_URL}${process.env.PATH_REDIRECT}` as string);
