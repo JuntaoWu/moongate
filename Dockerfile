@@ -1,5 +1,5 @@
 # Check out https://hub.docker.com/_/node to select a new base image
-FROM node:16-alpine
+FROM node:14-alpine as build-env
 
 # Set to a non-root built-in user `node`
 USER node
@@ -21,8 +21,13 @@ COPY --chown=node . .
 
 RUN npm run build
 
+FROM gcr.io/distroless/nodejs:14
+COPY --from=build-env /home/node/app /app
+WORKDIR /app
+
 # Bind to all network interfaces so that it can be mapped to the host OS
 ENV HOST=0.0.0.0 PORT=3000
 
 EXPOSE ${PORT}
-CMD [ "node", "." ]
+
+CMD ["index.js"]
