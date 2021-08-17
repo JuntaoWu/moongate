@@ -22,7 +22,7 @@ COPY --chown=node . .
 RUN npm run build
 
 FROM gcr.io/distroless/nodejs:14
-COPY --from=build-env /home/node/app /app
+COPY --from=build-env /home/node/app/dist /app
 WORKDIR /app
 
 # Bind to all network interfaces so that it can be mapped to the host OS
