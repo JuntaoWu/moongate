@@ -170,6 +170,7 @@ export class UserController {
         username: currentUserProfile.name,
         walletAddress: user.walletAddress,
         network: user.network,
+        updatedAt: user.updatedAt,
       },
       status: Status.SUCCESS.toString(),
       errorCode: "",
