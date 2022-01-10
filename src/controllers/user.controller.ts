@@ -309,7 +309,7 @@ export class UserController {
 
     const link = `${process.env.API_URL}/acitveUser?token=${savedUser.verificationToken}`;
     const message: MailDataRequired = {
-      subject: "Welcome to ${process.env.BRAND_NAME}!",
+      subject: `Welcome to ${process.env.BRAND_NAME}!`,
       html: `<div>
           <p>Hi, ${savedUser.username}</p>
           <p>Please take a second to confirm ${savedUser.email} as your email address</p>
