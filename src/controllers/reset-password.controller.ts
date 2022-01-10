@@ -123,12 +123,12 @@ export class ResetPasswordController {
       subject: "Activate User",
       body: `<div>
           <p>Hi, ${user.username}</p>
-          <p>Weclome to Moongate!</p>
+          <p>Weclome to ${process.env.BRAND_NAME}!</p>
           <p>Please take a second to confirm ${user.email} as your email address</p>
           <p><a href="${process.env.API_URL}/acitveUser?token=${user.verificationToken}">Activations Link</a></p>
           <p>Once you do, you'll be able to opt-in to notifactions of activity and access other features that require a valid email address.</p>
           <p>Best Regards,</p>
-          <p>Team Moongate</p>
+          <p>Team ${process.env.BRAND_NAME}</p>
       </div>`,
       receiver: {"to": [{"id": user.email}]},
       sentDate: new Date(),
@@ -138,14 +138,14 @@ export class ResetPasswordController {
     await this.notifProvider.publish(message);*/
     const link = `${process.env.API_URL}/acitveUser?token=${user.verificationToken}`;
     const message: MailDataRequired = {
-      subject: "Welcome to Moongate!",
+      subject: `Welcome to ${process.env.BRAND_NAME}!`,
       html: `<div>
           <p>Hi, ${user.username}</p>
           <p>Please take a second to confirm ${user.email} as your email address</p>
           <p><a href="${process.env.API_URL}/acitveUser?token=${user.verificationToken}">${link}</a></p>
           <p>Once you do, you'll be able to opt-in to notifactions of activity and access other features that require a valid email address.</p>
           <p>Best Regards,</p>
-          <p>Team Moongate</p>
+          <p>Team ${process.env.BRAND_NAME}</p>
       </div>`,
       to: {email: user.email},
       from: process.env.SEND_FROM as string,
@@ -200,7 +200,7 @@ export class ResetPasswordController {
         <a href="${process.env.APPLICATION_URL}${process.env.PATH_RESET_PASSWORD}?token=${user.resetKey}">${link}</a>
         <p>If you didn’t request to reset your password, please ignore this email or reset your password to protect your account.</p>
         <p>Thanks</p>
-        <p>Team Moongate</p>
+        <p>Team ${process.env.BRAND_NAME}</p>
       </div>`,
       to: {email: user.email},
       from: process.env.SEND_FROM as string,
@@ -246,7 +246,7 @@ export class ResetPasswordController {
   async resetPassword(
     @requestBody(ResetPasswordRequestBody) resetPassword: ResetPassword,
   ): Promise<any> {
-    let result = undefined;
+    const result = undefined;
 
     const user = await this.userRepository.findOne({where: {resetKey: resetPassword.token}});
     if (!user) {

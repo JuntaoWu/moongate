@@ -19,6 +19,9 @@ services:
     build:
       context: '.'
       dockerfile: 'Dockerfile'
+    environment:
+      - API_URL=value
+      - BRAND_NAME=Networked
     image: cepheus990910/moongate_service:${MOONGATE_VERSION_TAG}
     depends_on:
       - moongate_database_mongo
@@ -27,6 +30,6 @@ services:
         aliases:
           - moongate-service
 volumes:
-  mongo_data:
+  mongo_data: null
 networks:
-  MOONGATE:
+  MOONGATE: null

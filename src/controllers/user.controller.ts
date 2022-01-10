@@ -293,12 +293,12 @@ export class UserController {
     //   subject: "Activate User",
     //   body: `<div>
     //       <p>Hi, ${savedUser.username}</p>
-    //       <p>Weclome to Moongate!</p>
+    //       <p>Weclome to ${process.env.BRAND_NAME}!</p>
     //       <p>Please take a second to confirm ${savedUser.email} as your email address</p>
     //       <p><a href="${process.env.API_URL}/acitveUser?token=${savedUser.verificationToken}">Activations Link</a></p>
     //       <p>Once you do, you'll be able to opt-in to notifactions of activity and access other features that require a valid email address.</p>
     //       <p>Best Regards,</p>
-    //       <p>Team Moongate</p>
+    //       <p>Team ${process.env.BRAND_NAME}</p>
     //   </div>`,
     //   receiver: {"to": [{"id": savedUser.email}]},
     //   sentDate: new Date(),
@@ -309,14 +309,14 @@ export class UserController {
 
     const link = `${process.env.API_URL}/acitveUser?token=${savedUser.verificationToken}`;
     const message: MailDataRequired = {
-      subject: "Welcome to Moongate!",
+      subject: "Welcome to ${process.env.BRAND_NAME}!",
       html: `<div>
           <p>Hi, ${savedUser.username}</p>
           <p>Please take a second to confirm ${savedUser.email} as your email address</p>
           <p><a href="${process.env.API_URL}/acitveUser?token=${savedUser.verificationToken}">${link}</a></p>
           <p>Once you do, you'll be able to opt-in to notifactions of activity and access other features that require a valid email address.</p>
           <p>Best Regards,</p>
-          <p>Team Moongate</p>
+          <p>Team ${process.env.BRAND_NAME}</p>
       </div>`,
       to: {email: savedUser.email},
       from: process.env.SEND_FROM as string,

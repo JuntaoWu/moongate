@@ -180,7 +180,7 @@ export class TransferController {
     const currentUser = await this.userRepository.findOne({where: {id: currentUserProfile[securityId]}})
 
     if (currentUser) {
-      let transfer = new Transfer();
+      const transfer = new Transfer();
       transfer.userId = currentUserProfile[securityId];
       transfer.sender = currentUser.username as any;
       transfer.receiver = transferRequset.receiver;
@@ -199,7 +199,7 @@ export class TransferController {
             <p><a href="${process.env.API_URL}/acitveTransfer?transferId=${result.id}">Activations Link</a></p>
             <p>If it is not your own operation, simply ignore this email.</p>
             <p>Best Regards,</p>
-            <p>Team Moongate</p>
+            <p>Team ${process.env.BRAND_NAME}</p>
         </div>`,
         receiver: {"to": [{"id": currentUser.email}]},
         sentDate: new Date(),
@@ -211,13 +211,13 @@ export class TransferController {
         subject: "Confirmation of transfer application",
         html: `<div>
           <p>Hi, ${currentUser.username}</p>
-          <p>Your Moongate account applies to transfer ${transferRequset.amount.toFixed(2)} T to</p>
+          <p>Your ${process.env.BRAND_NAME} account applies to transfer ${transferRequset.amount.toFixed(2)} T to</p>
           <p>${targetUser.username}</p>
           <p>Please verify the recipient's user ID verbatim. If you did make this request, please confirm the transfer:</p>
           <p><a href="${process.env.API_URL}/acitveTransfer?transferId=${result.id}">${link}</a></p>
           <p>If it is not your own operation, simply ignore this email.</p>
           <p>Best Regards,</p>
-          <p>Team Moongate</p>
+          <p>Team ${process.env.BRAND_NAME}</p>
         </div>`,
         to: {email: currentUser.email},
         from: process.env.SEND_FROM as string,
@@ -442,7 +442,7 @@ export class TransferController {
 
     let currentPurchasedTotal = undefined;
     let currentLockedTotal = undefined
-    let transferAmount = parseFloat(selectTransfer.amount.toString());
+    const transferAmount = parseFloat(selectTransfer.amount.toString());
 
     /**update sender investment */
     currentPurchasedTotal = parseFloat(senderInvestment.purchasedTotal.toString()) + transferAmount;
@@ -605,10 +605,10 @@ export class TransferController {
             body: `<div>
                 <p>Hi, ${currentUser.username}</p>
                 <p>Transfer successfully</p>
-                <p>Your Moongate account has successfully transferred ${transfer?.amount} T on ${currentDateTime}. The recipient's user ID is ${targetUser.username}</p>
+                <p>Your ${process.env.BRAND_NAME} account has successfully transferred ${transfer?.amount} T on ${currentDateTime}. The recipient's user ID is ${targetUser.username}</p>
                 <p>This is a system email, please do not reply.</p>
                 <p>Best Regards,</p>
-                <p>Team Moongate</p>
+                <p>Team ${process.env.BRAND_NAME}</p>
             </div>`,
             receiver: {"to": [{"id": currentUser.email}]},
             sentDate: new Date(),
@@ -620,10 +620,10 @@ export class TransferController {
             subject: "Transfer successfully",
             html: `<div>
               <p>Hi, ${currentUser.username}</p>
-              <p>Your Moongate account has successfully transferred ${parseFloat(transferAmount).toFixed(2)} T on ${currentDateTime}. The recipient's user ID is ${targetUser.username}</p>
+              <p>Your ${process.env.BRAND_NAME} account has successfully transferred ${parseFloat(transferAmount).toFixed(2)} T on ${currentDateTime}. The recipient's user ID is ${targetUser.username}</p>
               <p>This is a system email, please do not reply.</p>
               <p>Best Regards,</p>
-              <p>Team Moongate</p>
+              <p>Team ${process.env.BRAND_NAME}</p>
             </div>`,
             to: {email: currentUser.email},
             from: process.env.SEND_FROM as string,
@@ -700,7 +700,7 @@ export class TransferController {
                 <p>Your transfer to the user ${targetUser.username} has been successfully cancelled.</p>
                 <p>This is a system email, please do not reply.</p>
                 <p>Best Regards,</p>
-                <p>Team Moongate</p>
+                <p>Team ${process.env.BRAND_NAME}</p>
             </div>`,
             receiver: {"to": [{"id": currentUser.email}]},
             sentDate: new Date(),
@@ -715,7 +715,7 @@ export class TransferController {
                 <p>Your transfer to the user ${targetUser.username} has been successfully cancelled.</p>
                 <p>This is a system email, please do not reply.</p>
                 <p>Best Regards,</p>
-                <p>Team Moongate</p>
+                <p>Team ${process.env.BRAND_NAME}</p>
             </div>`,
             to: {email: currentUser.email},
             from: process.env.SEND_FROM as string,
@@ -836,7 +836,7 @@ export class TransferController {
 
 
     if (senderUser && targetUser) {
-      let transfer = new Transfer();
+      const transfer = new Transfer();
       transfer.userId = senderUser.id;
       transfer.sender = senderUser.username as any;
       transfer.receiver = targetUser.username as any;
