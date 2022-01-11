@@ -211,7 +211,7 @@ export class TransferController {
         subject: "Confirmation of transfer application",
         html: `<div>
           <p>Hi, ${currentUser.username}</p>
-          <p>Your ${process.env.BRAND_NAME} account applies to transfer ${transferRequset.amount.toFixed(2)} T to</p>
+          <p>Your ${process.env.BRAND_NAME} account applies to transfer ${transferRequset.amount.toFixed(2)} NET to</p>
           <p>${targetUser.username}</p>
           <p>Please verify the recipient's user ID verbatim. If you did make this request, please confirm the transfer:</p>
           <p><a href="${process.env.API_URL}/acitveTransfer?transferId=${result.id}">${link}</a></p>
@@ -620,7 +620,7 @@ export class TransferController {
             subject: "Transfer successfully",
             html: `<div>
               <p>Hi, ${currentUser.username}</p>
-              <p>Your ${process.env.BRAND_NAME} account has successfully transferred ${parseFloat(transferAmount).toFixed(2)} T on ${currentDateTime}. The recipient's user ID is ${targetUser.username}</p>
+              <p>Your ${process.env.BRAND_NAME} account has successfully transferred ${parseFloat(transferAmount).toFixed(2)} NET on ${currentDateTime}. The recipient's user ID is ${targetUser.username}</p>
               <p>This is a system email, please do not reply.</p>
               <p>Best Regards,</p>
               <p>Team ${process.env.BRAND_NAME}</p>

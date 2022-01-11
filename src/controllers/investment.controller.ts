@@ -47,9 +47,9 @@ export class InvestmentController {
     if (investmentResult) {
       const pendingTransfers = await this.transferRepository.find({where: {userId: currentUserProfile[securityId], status: TransferStatus.PENDING}});
       let pendingAmount = 0;
-      pendingTransfers && pendingTransfers.map((item) => {
+      pendingTransfers?.forEach(item => {
         pendingAmount = pendingAmount + parseFloat(item.amount.toString());
-      })
+      });
       const result = {
         ...investmentResult,
         purchasedTotal: parseFloat(investmentResult.purchasedTotal.toString()) - pendingAmount,
